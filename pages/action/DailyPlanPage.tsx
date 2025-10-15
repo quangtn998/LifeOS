@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../contexts/AuthContext';
 import Card from '../../components/Card';
+import HistorySection from '../../components/HistorySection';
 import { PlusCircleIcon, TrashIcon, CheckCircleIcon, ZapIcon } from '../../components/icons/Icons';
 import { DailyPlan, DailyTask, WeeklyReviewData } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
@@ -23,6 +24,8 @@ const DailyPlanPage: React.FC = () => {
     const [saving, setSaving] = useState(false);
     const [newTaskText, setNewTaskText] = useState('');
     const [lastSaved, setLastSaved] = useState<Date | null>(null);
+    const [historyLoading, setHistoryLoading] = useState(false);
+    const [dailyHistory, setDailyHistory] = useState<DailyPlan[]>([]);
 
     // For Golden Thread
     const [weeklyPriorities, setWeeklyPriorities] = useState<DailyTask[]>([]);
@@ -60,7 +63,31 @@ const DailyPlanPage: React.FC = () => {
         setLoading(false);
     }, [user]);
 
-    useEffect(() => { fetchData(); }, [fetchData]);
+    const fetchDailyHistory = useCallback(async () => {
+        if (!user) return;
+        setHistoryLoading(true);
+        try {
+            const today = getToday();
+            const { data, error } = await supabase
+                .from('daily_plan')
+                .select('*')
+                .eq('user_id', user.id)
+                .neq('date', today)
+                .order('date', { ascending: false })
+                .limit(14);
+            if (error) throw error;
+            setDailyHistory(data || []);
+        } catch (err) {
+            console.error('Error fetching daily history:', err);
+        } finally {
+            setHistoryLoading(false);
+        }
+    }, [user]);
+
+    useEffect(() => {
+        fetchData();
+        fetchDailyHistory();
+    }, [fetchData, fetchDailyHistory]);
 
     const handleSave = useCallback(async () => {
       if (!user) return;
@@ -180,6 +207,63 @@ const DailyPlanPage: React.FC = () => {
                     </div>
                 </Card>
             </div>
+
+            <HistorySection title="Daily Plan History" isLoading={historyLoading}>
+                {dailyHistory.length === 0 ? (
+                    <p className="text-center text-gray-400 py-8">No previous daily plans yet. Keep planning your days to build your history!</p>
+                ) : (
+                    <div className="space-y-4">
+                        {dailyHistory.map(day => {
+                            const completedTasks = day.tasks?.filter(t => t.completed).length || 0;
+                            const totalTasks = day.tasks?.length || 0;
+                            return (
+                                <Card key={day.id} className="bg-gray-800/30">
+                                    <div className="flex justify-between items-start mb-3">
+                                        <div>
+                                            <h3 className="text-lg font-semibold text-white">
+                                                {new Date(day.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+                                            </h3>
+                                            {totalTasks > 0 && (
+                                                <p className="text-sm text-gray-400 mt-1">
+                                                    {completedTasks}/{totalTasks} tasks completed
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {day.manifesto?.adventure && (
+                                        <div className="mb-3 p-3 bg-gray-900 rounded-md">
+                                            <p className="text-xs font-semibold text-yellow-400 mb-1">Adventure:</p>
+                                            <p className="text-sm text-white">{day.manifesto.adventure}</p>
+                                        </div>
+                                    )}
+
+                                    {day.tasks && day.tasks.length > 0 && (
+                                        <div className="mb-3">
+                                            <p className="text-xs font-semibold text-gray-400 mb-2">Tasks:</p>
+                                            <div className="space-y-1">
+                                                {day.tasks.map(task => (
+                                                    <div key={task.id} className="flex items-center text-sm">
+                                                        <CheckCircleIcon className={`w-4 h-4 mr-2 ${task.completed ? 'text-green-500' : 'text-gray-600'}`} />
+                                                        <span className={task.completed ? 'line-through text-gray-500' : 'text-gray-300'}>{task.text}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {day.shutdown?.accomplished && (
+                                        <div className="p-3 bg-gray-900 rounded-md">
+                                            <p className="text-xs font-semibold text-green-400 mb-1">Accomplished:</p>
+                                            <p className="text-xs text-gray-300">{day.shutdown.accomplished}</p>
+                                        </div>
+                                    )}
+                                </Card>
+                            );
+                        })}
+                    </div>
+                )}
+            </HistorySection>
         </div>
     );
 };

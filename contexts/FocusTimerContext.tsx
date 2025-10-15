@@ -78,6 +78,22 @@ export const FocusTimerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     if(error) console.error("Error logging session:", error);
   }, [user]);
 
+  const saveSessionData = useCallback(async () => {
+    if (!user) return;
+    const today = new Date().toISOString().split('T')[0];
+
+    await supabase.from('focus_sessions').upsert({
+      user_id: user.id,
+      date: today,
+      goal: sessionGoal,
+      captured_thoughts: capturedThoughts,
+      reflection: reflection,
+      disruptors: sessionStats.disruptors,
+      toolkit_usage: sessionStats.toolkit,
+      duration_minutes: PHASES.FOCUS.duration / 60,
+    }, { onConflict: 'user_id,date' });
+  }, [user, sessionGoal, capturedThoughts, reflection, sessionStats]);
+
   const saveSessionGoal = useCallback(async () => {
     if (!user || !sessionGoal.trim()) return;
     const today = new Date().toISOString().split('T')[0];
@@ -120,6 +136,7 @@ export const FocusTimerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       setSecondsLeft(PHASES.REFLECT.duration);
     } else if (currentPhase === 'REFLECT') {
       reflectEndAudio.current?.play();
+      await saveSessionData();
       resetTimer();
     }
   }, [currentPhase, logFocusSession, resetTimer]);

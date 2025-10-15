@@ -3,9 +3,26 @@ import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../contexts/AuthContext';
 import { useFocusTimer } from '../../contexts/FocusTimerContext';
 import Card from '../../components/Card';
+import HistorySection from '../../components/HistorySection';
 import { PlayIcon, PauseIcon, RefreshCwIcon, PlusCircleIcon, TrashIcon } from '../../components/icons/Icons';
 import { CustomTool, DailyPlan } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
+
+interface FocusSessionHistory {
+  id: string;
+  date: string;
+  goal: string;
+  captured_thoughts: string;
+  reflection: string;
+  disruptors: {
+    procrastination: number;
+    distraction: number;
+    burnout: number;
+    perfectionism: number;
+  };
+  toolkit_usage: Record<string, number>;
+  duration_minutes: number;
+}
 
 const PHASES = {
   PLAN: { name: 'PLAN & ORGANIZE', color: 'text-yellow-400' },
@@ -40,6 +57,8 @@ const FocusTimerPage: React.FC = () => {
 
     const [dailyAdventure, setDailyAdventure] = useState<string | null>(null);
     const [customTools, setCustomTools] = useState<{activation: CustomTool[], reactivation: CustomTool[]}>({activation: [], reactivation: []});
+    const [sessionHistory, setSessionHistory] = useState<FocusSessionHistory[]>([]);
+    const [historyLoading, setHistoryLoading] = useState(false);
 
     const fetchData = useCallback(async () => {
         if (!user) return;
@@ -61,7 +80,30 @@ const FocusTimerPage: React.FC = () => {
         }
     }, [user, setSessionGoal]);
 
-    useEffect(() => { fetchData(); }, [fetchData]);
+    const fetchSessionHistory = useCallback(async () => {
+        if (!user) return;
+        setHistoryLoading(true);
+        try {
+            const { data, error } = await supabase
+                .from('focus_sessions')
+                .select('*')
+                .eq('user_id', user.id)
+                .neq('date', new Date().toISOString().split('T')[0])
+                .order('date', { ascending: false })
+                .limit(30);
+            if (error) throw error;
+            setSessionHistory(data || []);
+        } catch (err) {
+            console.error('Error fetching session history:', err);
+        } finally {
+            setHistoryLoading(false);
+        }
+    }, [user]);
+
+    useEffect(() => {
+        fetchData();
+        fetchSessionHistory();
+    }, [fetchData, fetchSessionHistory]);
 
     // --- Custom Tools ---
     const addCustomTool = async (type: 'activation' | 'reactivation', text: string) => {
@@ -152,12 +194,10 @@ const FocusTimerPage: React.FC = () => {
                         <h3 className="font-bold text-white">Session Summary</h3>
                         <div className="mt-2 space-y-2 text-sm">
                             <h4 className="font-semibold text-red-400">Disruptors Logged:</h4>
-                            {/* FIX: Cast result of Object.entries to resolve type inference issue. */}
                             {(Object.entries(sessionStats.disruptors) as [string, number][]).filter(([, val]) => val > 0).map(([key, val]) => <p key={key} className="text-gray-400"><span className="capitalize">{key}:</span> {val} times</p>)}
                             {Object.values(sessionStats.disruptors).every(v => v === 0) && <p className="text-gray-400">None. Great focus!</p>}
-                            
+
                             <h4 className="mt-4 font-semibold text-green-400">Toolkit Used:</h4>
-                            {/* FIX: Cast result of Object.entries to resolve type inference issue. */}
                             {(Object.entries(sessionStats.toolkit) as [string, number][]).filter(([, val]) => val > 0).map(([key, val]) => <p key={key} className="text-gray-400">"{key}": {val} times</p>)}
                              {Object.values(sessionStats.toolkit).length === 0 && <p className="text-gray-400">None.</p>}
                         </div>
@@ -170,6 +210,70 @@ const FocusTimerPage: React.FC = () => {
                  </div>
             )}
 
+            <HistorySection title="Focus Session History" isLoading={historyLoading}>
+                {sessionHistory.length === 0 ? (
+                    <p className="text-center text-gray-400 py-8">No previous focus sessions yet. Complete your first session to see history here!</p>
+                ) : (
+                    <div className="space-y-4">
+                        {sessionHistory.map(session => (
+                            <Card key={session.id} className="bg-gray-800/30">
+                                <div className="flex justify-between items-start mb-2">
+                                    <div>
+                                        <h3 className="text-lg font-semibold text-cyan-400">{session.goal || 'No goal set'}</h3>
+                                        <p className="text-sm text-gray-400">
+                                            {new Date(session.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                                        </p>
+                                    </div>
+                                    <span className="text-xs text-gray-500 bg-gray-700 px-2 py-1 rounded">
+                                        {session.duration_minutes || 50} min
+                                    </span>
+                                </div>
+
+                                {session.reflection && (
+                                    <div className="mt-3 p-3 bg-gray-900 rounded-md">
+                                        <p className="text-sm font-semibold text-green-400 mb-1">Reflection:</p>
+                                        <p className="text-sm text-gray-300">{session.reflection}</p>
+                                    </div>
+                                )}
+
+                                {session.captured_thoughts && (
+                                    <div className="mt-2 p-3 bg-gray-900 rounded-md">
+                                        <p className="text-xs font-semibold text-gray-400 mb-1">Captured Thoughts:</p>
+                                        <p className="text-xs text-gray-400">{session.captured_thoughts}</p>
+                                    </div>
+                                )}
+
+                                <div className="mt-3 grid grid-cols-2 gap-4">
+                                    <div>
+                                        <p className="text-xs font-semibold text-red-400 mb-1">Disruptors:</p>
+                                        {session.disruptors && Object.entries(session.disruptors).filter(([, val]) => val > 0).length > 0 ? (
+                                            <div className="space-y-1">
+                                                {Object.entries(session.disruptors).filter(([, val]) => val > 0).map(([key, val]) => (
+                                                    <p key={key} className="text-xs text-gray-400 capitalize">{key}: {val}</p>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <p className="text-xs text-gray-400">None</p>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-semibold text-green-400 mb-1">Tools Used:</p>
+                                        {session.toolkit_usage && Object.keys(session.toolkit_usage).length > 0 ? (
+                                            <div className="space-y-1">
+                                                {Object.entries(session.toolkit_usage).slice(0, 3).map(([key, val]) => (
+                                                    <p key={key} className="text-xs text-gray-400 truncate">"{key}": {val}</p>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <p className="text-xs text-gray-400">None</p>
+                                        )}
+                                    </div>
+                                </div>
+                            </Card>
+                        ))}
+                    </div>
+                )}
+            </HistorySection>
         </div>
     );
 };

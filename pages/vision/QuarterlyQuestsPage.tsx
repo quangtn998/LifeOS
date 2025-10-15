@@ -3,14 +3,17 @@ import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../contexts/AuthContext';
 import { Quest } from '../../types';
 import Card from '../../components/Card';
+import HistorySection from '../../components/HistorySection';
 import { PlusCircleIcon, TrashIcon, CheckCircleIcon, EditIcon, SaveIcon } from '../../components/icons/Icons';
 
 const QuarterlyQuestsPage: React.FC = () => {
   const { user } = useAuth();
   const [quests, setQuests] = useState<Quest[]>([]);
+  const [completedQuests, setCompletedQuests] = useState<Quest[]>([]);
   const [newQuestTitle, setNewQuestTitle] = useState('');
   const [newQuestCategory, setNewQuestCategory] = useState<'work' | 'life'>('work');
   const [loading, setLoading] = useState(true);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchQuests = useCallback(async () => {
@@ -21,14 +24,34 @@ const QuarterlyQuestsPage: React.FC = () => {
         .from('quests')
         .select('*')
         .eq('user_id', user.id)
+        .eq('completed', false)
         .order('created_at', { ascending: true });
       if (error) throw error;
       setQuests(data?.map(q => ({...q, editing: false})) || []);
-    } catch (err: any) { setError(err.message); } 
+    } catch (err: any) { setError(err.message); }
     finally { setLoading(false); }
   }, [user]);
 
-  useEffect(() => { fetchQuests(); }, [fetchQuests]);
+  const fetchCompletedQuests = useCallback(async () => {
+    if (!user) return;
+    setHistoryLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('quests')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('completed', true)
+        .order('completed_at', { ascending: false });
+      if (error) throw error;
+      setCompletedQuests(data || []);
+    } catch (err: any) { setError(err.message); }
+    finally { setHistoryLoading(false); }
+  }, [user]);
+
+  useEffect(() => {
+    fetchQuests();
+    fetchCompletedQuests();
+  }, [fetchQuests, fetchCompletedQuests]);
 
   const addQuest = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,9 +79,22 @@ const QuarterlyQuestsPage: React.FC = () => {
 
   const toggleQuest = async (id: string, completed: boolean) => {
     try {
-      const { data, error } = await supabase.from('quests').update({ completed: !completed }).eq('id', id).select().single();
+      const updateData: any = { completed: !completed };
+      if (!completed) {
+        updateData.completed_at = new Date().toISOString();
+      } else {
+        updateData.completed_at = null;
+      }
+      const { data, error } = await supabase.from('quests').update(updateData).eq('id', id).select().single();
       if (error) throw error;
-      setQuests(quests.map(q => q.id === id ? {...data, editing: q.editing} : q));
+
+      if (!completed) {
+        setQuests(quests.filter(q => q.id !== id));
+        setCompletedQuests([data, ...completedQuests]);
+      } else {
+        setCompletedQuests(completedQuests.filter(q => q.id !== id));
+        setQuests([...quests, {...data, editing: false}]);
+      }
     } catch (err: any) { setError(err.message); }
   };
   
@@ -138,6 +174,45 @@ const QuarterlyQuestsPage: React.FC = () => {
         {renderQuestList('work')}
         {renderQuestList('life')}
       </div>
+
+      <HistorySection title="Completed Quests History" isLoading={historyLoading}>
+        {completedQuests.length === 0 ? (
+          <p className="text-center text-gray-400 py-8">No completed quests yet. Keep working on your goals!</p>
+        ) : (
+          <div className="space-y-4">
+            {['work', 'life'].map(category => {
+              const categoryQuests = completedQuests.filter(q => q.category === category);
+              if (categoryQuests.length === 0) return null;
+              return (
+                <div key={category}>
+                  <h3 className="text-lg font-bold text-cyan-400 capitalize mb-2">{category} Quests</h3>
+                  <div className="space-y-2">
+                    {categoryQuests.map(quest => (
+                      <div key={quest.id} className="flex items-center p-3 rounded-md bg-gray-800/50">
+                        <button onClick={() => toggleQuest(quest.id, quest.completed)} className="mr-3 flex-shrink-0">
+                          <CheckCircleIcon className="w-6 h-6 text-green-500" />
+                        </button>
+                        <div className="flex-grow">
+                          <span className="text-white line-through">
+                            {quest.type === 'main' && <span className="font-bold text-cyan-400">[MAIN] </span>}
+                            {quest.title}
+                          </span>
+                          <p className="text-xs text-gray-400 mt-1">
+                            Completed: {quest.completed_at ? new Date(quest.completed_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'N/A'}
+                          </p>
+                        </div>
+                        <button onClick={() => deleteQuest(quest.id)} className="text-gray-400 hover:text-red-500 ml-3">
+                          <TrashIcon className="w-5 h-5"/>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </HistorySection>
     </div>
   );
 };

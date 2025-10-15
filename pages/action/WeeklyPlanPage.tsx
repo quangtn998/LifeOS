@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../contexts/AuthContext';
 import Card from '../../components/Card';
+import HistorySection from '../../components/HistorySection';
 import { WeeklyReviewData, IdealBlock, DailyTask, Quest, CalendarEvent } from '../../types';
 import { PlusCircleIcon, SaveIcon, TrashIcon, ZapIcon, CheckCircleIcon } from '../../components/icons/Icons';
 import { v4 as uuidv4 } from 'uuid';
@@ -32,6 +33,8 @@ const WeeklyPlanPage: React.FC = () => {
     const [lastSaved, setLastSaved] = useState<Date | null>(null);
     const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
     const [fetchingEvents, setFetchingEvents] = useState(false);
+    const [historyLoading, setHistoryLoading] = useState(false);
+    const [weeklyHistory, setWeeklyHistory] = useState<WeeklyReviewData[]>([]);
 
     // For Golden Thread
     const [quests, setQuests] = useState<Quest[]>([]);
@@ -67,6 +70,27 @@ const WeeklyPlanPage: React.FC = () => {
         if (questsData) setQuests(questsData);
 
         setLoading(false);
+    }, [user, weekStartDate]);
+
+    const fetchWeeklyHistory = useCallback(async () => {
+        if (!user) return;
+        setHistoryLoading(true);
+        try {
+            const currentWeekStart = weekStartDate.toISOString().split('T')[0];
+            const { data, error } = await supabase
+                .from('weekly_review')
+                .select('*')
+                .eq('user_id', user.id)
+                .neq('week_start_date', currentWeekStart)
+                .order('week_start_date', { ascending: false })
+                .limit(12);
+            if (error) throw error;
+            setWeeklyHistory(data || []);
+        } catch (err) {
+            console.error('Error fetching weekly history:', err);
+        } finally {
+            setHistoryLoading(false);
+        }
     }, [user, weekStartDate]);
 
     const fetchCalendarEvents = useCallback(async () => {
@@ -110,7 +134,10 @@ const WeeklyPlanPage: React.FC = () => {
         return () => clearTimeout(timer);
     }, [icalUrl, fetchCalendarEvents]);
 
-    useEffect(() => { fetchData(); }, [fetchData]);
+    useEffect(() => {
+        fetchData();
+        fetchWeeklyHistory();
+    }, [fetchData, fetchWeeklyHistory]);
 
     const handleSave = useCallback(async () => {
         if (!user) return;
@@ -320,6 +347,58 @@ const WeeklyPlanPage: React.FC = () => {
                 </div>
             </Card>
 
+            <HistorySection title="Weekly Review History" isLoading={historyLoading}>
+                {weeklyHistory.length === 0 ? (
+                    <p className="text-center text-gray-400 py-8">No previous weekly reviews yet. Complete your first weekly review to see history here!</p>
+                ) : (
+                    <div className="space-y-4">
+                        {weeklyHistory.map(week => {
+                            const startDate = new Date(week.week_start_date);
+                            const endDate = new Date(startDate);
+                            endDate.setDate(endDate.getDate() + 6);
+                            return (
+                                <Card key={week.id} className="bg-gray-800/30">
+                                    <div className="mb-3">
+                                        <h3 className="text-lg font-semibold text-white">
+                                            {startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                        </h3>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {week.wins && (
+                                            <div className="p-3 bg-gray-900 rounded-md">
+                                                <p className="text-xs font-semibold text-green-400 mb-1">Wins & Accomplishments:</p>
+                                                <p className="text-sm text-gray-300">{week.wins}</p>
+                                            </div>
+                                        )}
+
+                                        {week.challenges && (
+                                            <div className="p-3 bg-gray-900 rounded-md">
+                                                <p className="text-xs font-semibold text-yellow-400 mb-1">Challenges & Lessons:</p>
+                                                <p className="text-sm text-gray-300">{week.challenges}</p>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {week.nextWeekPriorities && week.nextWeekPriorities.length > 0 && (
+                                        <div className="mt-3 p-3 bg-gray-900 rounded-md">
+                                            <p className="text-xs font-semibold text-cyan-400 mb-2">Priorities Set:</p>
+                                            <div className="space-y-1">
+                                                {week.nextWeekPriorities.map((priority: DailyTask) => (
+                                                    <div key={priority.id} className="flex items-center text-sm">
+                                                        <CheckCircleIcon className={`w-4 h-4 mr-2 ${priority.completed ? 'text-green-500' : 'text-gray-600'}`} />
+                                                        <span className={priority.completed ? 'line-through text-gray-500' : 'text-gray-300'}>{priority.text}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </Card>
+                            );
+                        })}
+                    </div>
+                )}
+            </HistorySection>
         </div>
     );
 };
