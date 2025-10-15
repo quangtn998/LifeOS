@@ -25,6 +25,7 @@ interface FocusTimerContextType {
   setSessionStats: React.Dispatch<React.SetStateAction<FocusSessionStats>>;
   toggleTimer: () => void;
   resetTimer: () => void;
+  skipToNextPhase: () => void;
   trackDisruptor: (disruptor: keyof FocusSessionStats['disruptors']) => void;
   trackToolUsage: (toolText: string) => void;
   formatTime: (seconds: number) => string;
@@ -160,6 +161,24 @@ export const FocusTimerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const toggleTimer = () => setIsActive(!isActive);
 
+  const skipToNextPhase = useCallback(async () => {
+    setIsActive(false);
+    if (currentPhase === 'PLAN') {
+      planEndAudio.current?.play();
+      setCurrentPhase('FOCUS');
+      setSecondsLeft(PHASES.FOCUS.duration);
+    } else if (currentPhase === 'FOCUS') {
+      focusEndAudio.current?.play();
+      await logFocusSession(PHASES.FOCUS.duration / 60);
+      setCurrentPhase('REFLECT');
+      setSecondsLeft(PHASES.REFLECT.duration);
+    } else if (currentPhase === 'REFLECT') {
+      reflectEndAudio.current?.play();
+      await saveSessionData();
+      resetTimer();
+    }
+  }, [currentPhase, logFocusSession, resetTimer, saveSessionData]);
+
   const trackDisruptor = (disruptor: keyof FocusSessionStats['disruptors']) => {
     setSessionStats(s => ({ ...s, disruptors: {...s.disruptors, [disruptor]: s.disruptors[disruptor] + 1 }}));
   };
@@ -192,6 +211,7 @@ export const FocusTimerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       setSessionStats,
       toggleTimer,
       resetTimer,
+      skipToNextPhase,
       trackDisruptor,
       trackToolUsage,
       formatTime,

@@ -4,7 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useFocusTimer } from '../../contexts/FocusTimerContext';
 import Card from '../../components/Card';
 import HistorySection from '../../components/HistorySection';
-import { PlayIcon, PauseIcon, RefreshCwIcon, PlusCircleIcon, TrashIcon } from '../../components/icons/Icons';
+import { PlayIcon, PauseIcon, RefreshCwIcon, PlusCircleIcon, TrashIcon, SkipForwardIcon } from '../../components/icons/Icons';
 import { CustomTool, DailyPlan } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -50,6 +50,7 @@ const FocusTimerPage: React.FC = () => {
         setReflection,
         toggleTimer,
         resetTimer,
+        skipToNextPhase,
         trackDisruptor,
         trackToolUsage,
         formatTime,
@@ -132,26 +133,51 @@ const FocusTimerPage: React.FC = () => {
                 <div className={`my-6 text-7xl md:text-8xl font-mono font-bold ${phase.color}`}>
                     {formatTime(secondsLeft)}
                 </div>
-                <div className="flex justify-center space-x-4">
+                <div className="flex justify-center items-center space-x-4">
                     <button onClick={resetTimer} title="Reset" className="p-3 bg-gray-700 rounded-full text-white hover:bg-gray-600"><RefreshCwIcon className="w-6 h-6"/></button>
                     <button onClick={toggleTimer} className="p-4 bg-cyan-500 rounded-full text-white hover:bg-cyan-600">
                         {isActive ? <PauseIcon className="w-8 h-8" /> : <PlayIcon className="w-8 h-8" />}
+                    </button>
+                    <button onClick={skipToNextPhase} title="Skip to next phase" className="p-3 bg-gray-700 rounded-full text-white hover:bg-gray-600">
+                        <SkipForwardIcon className="w-6 h-6"/>
                     </button>
                 </div>
             </Card>
 
             {currentPhase === 'PLAN' && (
-                <Card>
-                    <h3 className="font-bold text-white">What is your single focus for the next 50 minutes?</h3>
-                    {dailyAdventure && (
-                      <div className="p-3 my-3 text-sm text-center rounded-md bg-gray-900">
-                        <p className="text-gray-400">Today's Adventure:</p>
-                        <p className="font-semibold text-white">"{dailyAdventure}"</p>
-                        <button onClick={() => setSessionGoal(dailyAdventure)} className="px-2 py-1 mt-2 text-xs font-bold text-black bg-cyan-400 rounded-full hover:bg-cyan-300">Focus on this</button>
-                      </div>
-                    )}
-                    <input value={sessionGoal} onChange={e => setSessionGoal(e.target.value)} className="w-full p-2 mt-2 text-white bg-gray-900 border-gray-700 rounded-md" placeholder="e.g., Write first draft of report"/>
-                </Card>
+                <div className="space-y-6">
+                    <Card>
+                        <h3 className="text-xl font-bold text-white mb-4">Plan & Organize (5 minutes)</h3>
+                        <p className="text-sm text-gray-300 mb-4">Before diving into work, take 5 minutes to prepare yourself.</p>
+
+                        <div className="space-y-4">
+                            <div className="p-4 bg-gray-900 rounded-lg">
+                                <h4 className="font-semibold text-yellow-400 mb-2">Plan:</h4>
+                                <p className="text-sm text-gray-300 mb-3">"In the next 50 minutes, what exactly do I want to accomplish?" Write down one clear, specific goal. This trains your brain for intentionality.</p>
+
+                                {dailyAdventure && (
+                                    <div className="p-3 mb-3 text-sm text-center rounded-md bg-gray-800 border border-cyan-500/30">
+                                        <p className="text-gray-400">Today's Adventure:</p>
+                                        <p className="font-semibold text-white">"{dailyAdventure}"</p>
+                                        <button onClick={() => setSessionGoal(dailyAdventure)} className="px-3 py-1 mt-2 text-xs font-bold text-black bg-cyan-400 rounded-full hover:bg-cyan-300">Focus on this</button>
+                                    </div>
+                                )}
+
+                                <input
+                                    value={sessionGoal}
+                                    onChange={e => setSessionGoal(e.target.value)}
+                                    className="w-full p-3 text-white bg-gray-800 border border-gray-700 rounded-md focus:border-cyan-500 focus:outline-none"
+                                    placeholder="e.g., Write first draft of report"
+                                />
+                            </div>
+
+                            <div className="p-4 bg-gray-900 rounded-lg">
+                                <h4 className="font-semibold text-yellow-400 mb-2">Organize:</h4>
+                                <p className="text-sm text-gray-300">Spend 1-2 minutes clearing your workspace. A cluttered desk leads to a cluttered mind. Remove anything you don't need.</p>
+                            </div>
+                        </div>
+                    </Card>
+                </div>
             )}
 
             {currentPhase === 'FOCUS' && (
