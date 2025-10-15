@@ -18,7 +18,6 @@ const LifeCompassPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState('exercises');
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
   const fetchData = useCallback(async () => {
@@ -146,22 +145,9 @@ const LifeCompassPage: React.FC = () => {
         </div>
         {error && <p className="text-red-500 bg-red-500/10 p-3 rounded-md">Error: {error}</p>}
 
-        <div className="border-b border-gray-700">
-            <nav className="flex -mb-px space-x-6">
-                <button onClick={() => setActiveTab('exercises')} className={`py-3 px-1 border-b-2 font-medium text-sm ${activeTab === 'exercises' ? 'border-cyan-400 text-cyan-400' : 'border-transparent text-gray-400 hover:text-white'}`}>
-                    Core Exercises
-                </button>
-                <button onClick={() => setActiveTab('roleModels')} className={`py-3 px-1 border-b-2 font-medium text-sm ${activeTab === 'roleModels' ? 'border-cyan-400 text-cyan-400' : 'border-transparent text-gray-400 hover:text-white'}`}>
-                    Role Models ({data.roleModels.length})
-                </button>
-                <button onClick={() => setActiveTab('becoming')} className={`py-3 px-1 border-b-2 font-medium text-sm ${activeTab === 'becoming' ? 'border-cyan-400 text-cyan-400' : 'border-transparent text-gray-400 hover:text-white'}`}>
-                    Who to Become ({data.becoming.length})
-                </button>
-            </nav>
-        </div>
-        
-        {/* TAB CONTENT */}
-        <div className={activeTab === 'exercises' ? 'block' : 'hidden'}>
+        {/* Core Exercises */}
+        <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-white">Core Exercises</h2>
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 <Card><h2 className="font-bold">The Eulogy Method</h2><p className="text-sm text-gray-400 mt-1">What do you want people to say about you at the end of your life?</p><textarea value={data.eulogy} onChange={e => handleChange('eulogy', e.target.value)} rows={8} className="w-full p-2 mt-2 text-white bg-gray-900 border-gray-700 rounded-md"/></Card>
                 <Card><h2 className="font-bold">The Bucket List</h2><p className="text-sm text-gray-400 mt-1">What experiences do you want to have?</p><textarea value={data.bucketList} onChange={e => handleChange('bucketList', e.target.value)} rows={8} className="w-full p-2 mt-2 text-white bg-gray-900 border-gray-700 rounded-md"/></Card>
@@ -170,24 +156,28 @@ const LifeCompassPage: React.FC = () => {
             </div>
         </div>
 
-        <div className={activeTab === 'roleModels' ? 'block' : 'hidden'}>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            {data.roleModels.map(rm => <RoleModelCard key={rm.id} model={rm} onUpdate={updateRoleModel} onDelete={deleteRoleModel} />)}
-            <button onClick={addRoleModel} className="flex flex-col items-center justify-center min-h-[200px] p-6 border-2 border-dashed border-gray-700 rounded-lg hover:bg-gray-800 transition-colors">
-              <PlusCircleIcon className="w-10 h-10 text-gray-500" />
-              <span className="mt-2 text-sm font-medium text-gray-400">Add Role Model</span>
-            </button>
-          </div>
+        {/* Role Models */}
+        <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-white">Role Models ({data.roleModels.length})</h2>
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+                {data.roleModels.map(rm => <RoleModelCard key={rm.id} model={rm} onUpdate={updateRoleModel} onDelete={deleteRoleModel} />)}
+                <button onClick={addRoleModel} className="flex flex-col items-center justify-center min-h-[200px] p-6 border-2 border-dashed border-gray-700 rounded-lg hover:bg-gray-800 transition-colors">
+                  <PlusCircleIcon className="w-10 h-10 text-gray-500" />
+                  <span className="mt-2 text-sm font-medium text-gray-400">Add Role Model</span>
+                </button>
+            </div>
         </div>
 
-        <div className={activeTab === 'becoming' ? 'block' : 'hidden'}>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              {data.becoming.map(bp => <BecomingCard key={bp.id} profile={bp} onUpdate={updateBecomingProfile} onDelete={deleteBecomingProfile} />)}
-              <button onClick={addBecomingProfile} className="flex flex-col items-center justify-center min-h-[200px] p-6 border-2 border-dashed border-gray-700 rounded-lg hover:bg-gray-800 transition-colors">
-                <PlusCircleIcon className="w-10 h-10 text-gray-500" />
-                <span className="mt-2 text-sm font-medium text-gray-400">Add Identity Profile</span>
-              </button>
-          </div>
+        {/* Who to Become */}
+        <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-white">Who to Become ({data.becoming.length})</h2>
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+                {data.becoming.map(bp => <BecomingCard key={bp.id} profile={bp} onUpdate={updateBecomingProfile} onDelete={deleteBecomingProfile} />)}
+                <button onClick={addBecomingProfile} className="flex flex-col items-center justify-center min-h-[200px] p-6 border-2 border-dashed border-gray-700 rounded-lg hover:bg-gray-800 transition-colors">
+                  <PlusCircleIcon className="w-10 h-10 text-gray-500" />
+                  <span className="mt-2 text-sm font-medium text-gray-400">Add Identity Profile</span>
+                </button>
+            </div>
         </div>
     </div>
   );
@@ -220,7 +210,7 @@ const RoleModelCard: React.FC<{model: RoleModel, onUpdate: Function, onDelete: F
           <button onClick={() => onDelete(id)} className="p-1 text-gray-400 hover:text-red-500"><TrashIcon className="w-4 h-4"/></button>
         </div>
       </div>
-      {imageUrl && <img src={imageUrl} alt={name} className="object-cover w-full mt-3 rounded-md h-32"/>}
+      {imageUrl && <img src={imageUrl} alt={name} className="object-cover w-full mt-3 rounded-md aspect-video"/>}
       <div className="mt-4">
         <h4 className="font-semibold text-green-400">Qualities to Emulate</h4>
         <p className="mt-1 text-sm text-white whitespace-pre-wrap">{emulate || "N/A"}</p>
@@ -257,7 +247,7 @@ const BecomingCard: React.FC<{profile: BecomingProfile, onUpdate: Function, onDe
           <button onClick={() => onDelete(id)} className="p-1 text-gray-400 hover:text-red-500"><TrashIcon className="w-4 h-4"/></button>
         </div>
       </div>
-      {url && <img src={url} alt={who} className="object-cover w-full mt-3 rounded-md h-32"/>}
+      {url && <img src={url} alt={who} className="object-cover w-full mt-3 rounded-md aspect-video"/>}
        <div className="mt-4">
         <h4 className="font-semibold text-green-400">Defining Traits</h4>
         <p className="mt-1 text-sm text-white whitespace-pre-wrap">{traits || "N/A"}</p>

@@ -17,7 +17,6 @@ const FutureSketchPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState('exercises');
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
   const [newImageUrl, setNewImageUrl] = useState('');
@@ -136,26 +135,19 @@ const FutureSketchPage: React.FC = () => {
       </div>
       {error && <p className="text-red-500 bg-red-500/10 p-3 rounded-md">Error: {error}</p>}
       
-      <div className="border-b border-gray-700">
-        <nav className="flex -mb-px space-x-6">
-          <button onClick={() => setActiveTab('exercises')} className={`py-3 px-1 border-b-2 font-medium text-sm ${activeTab === 'exercises' ? 'border-cyan-400 text-cyan-400' : 'border-transparent text-gray-400 hover:text-white'}`}>
-              Core Exercises
-          </button>
-          <button onClick={() => setActiveTab('visionBoard')} className={`py-3 px-1 border-b-2 font-medium text-sm ${activeTab === 'visionBoard' ? 'border-cyan-400 text-cyan-400' : 'border-transparent text-gray-400 hover:text-white'}`}>
-              Vision Board ({data.visionBoard.length})
-          </button>
-        </nav>
-      </div>
-
-      <div className={activeTab === 'exercises' ? 'block' : 'hidden'}>
+      {/* Core Exercises */}
+      <div className="space-y-6">
+        <h2 className="text-2xl font-bold text-white">Core Exercises</h2>
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <Card><h2 className="font-bold">3-Year Dream</h2><p className="text-sm text-gray-400 mt-1">Describe your ideal life three years from now.</p><textarea value={data.threeYearDream} onChange={(e) => handleChange('threeYearDream', e.target.value)} rows={8} className="w-full p-2 mt-2 text-white bg-gray-900 border-gray-700 rounded-md"/></Card>
             <Card><h2 className="font-bold">Odyssey Plan</h2><p className="text-sm text-gray-400 mt-1">Sketch out three different five-year plans.</p><textarea value={data.odysseyPlan} onChange={(e) => handleChange('odysseyPlan', e.target.value)} rows={8} className="w-full p-2 mt-2 text-white bg-gray-900 border-gray-700 rounded-md"/></Card>
             <Card className="lg:col-span-2"><h2 className="font-bold">Future Calendar</h2><p className="text-sm text-gray-400 mt-1">What major events or milestones will you have?</p><textarea value={data.futureCalendar} onChange={(e) => handleChange('futureCalendar', e.target.value)} rows={8} className="w-full p-2 mt-2 text-white bg-gray-900 border-gray-700 rounded-md"/></Card>
         </div>
       </div>
-      
-      <div className={activeTab === 'visionBoard' ? 'block' : 'hidden'}>
+
+      {/* Vision Board */}
+      <div className="space-y-6">
+        <h2 className="text-2xl font-bold text-white">Vision Board ({data.visionBoard.length})</h2>
         <Card>
           <form onSubmit={addImageToBoard} className="flex flex-col gap-3 sm:flex-row">
               <input type="url" placeholder="Image URL" value={newImageUrl} onChange={e => setNewImageUrl(e.target.value)} required className="flex-grow p-2 text-white bg-gray-900 border-gray-700 rounded-md"/>
@@ -165,10 +157,10 @@ const FutureSketchPage: React.FC = () => {
               </button>
           </form>
         </Card>
-        <div className="grid grid-cols-1 gap-4 mt-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
             {data.visionBoard.map(image => (
               <div key={image.id} className="relative group">
-                <img src={image.url} alt={image.caption} className="object-cover w-full h-48 rounded-lg shadow-lg"/>
+                <img src={image.url} alt={image.caption} className="object-cover w-full aspect-video rounded-lg shadow-lg"/>
                 <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2">
                   <p className="text-xs text-white">{image.caption}</p>
                   <button onClick={() => deleteImageFromBoard(image.id)} className="self-end p-1 bg-red-600/80 rounded-full hover:bg-red-500">
