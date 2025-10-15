@@ -96,11 +96,14 @@ const WeeklyPlanPage: React.FC = () => {
     }, [icalUrl, user]);
 
     useEffect(() => {
-        if (icalUrl) {
-            fetchCalendarEvents();
-        } else {
-            setCalendarEvents([]);
-        }
+        const timer = setTimeout(() => {
+            if (icalUrl) {
+                fetchCalendarEvents();
+            } else {
+                setCalendarEvents([]);
+            }
+        }, 500);
+        return () => clearTimeout(timer);
     }, [icalUrl, fetchCalendarEvents]);
 
     useEffect(() => { fetchData(); }, [fetchData]);
@@ -118,7 +121,11 @@ const WeeklyPlanPage: React.FC = () => {
         setDraft(null);
     }, [user, review, idealBlocks, icalUrl, setDraft]);
 
-    const currentData = { review, blocks: idealBlocks, ical: icalUrl };
+    const currentData = React.useMemo(() => ({
+        review,
+        blocks: idealBlocks,
+        ical: icalUrl
+    }), [review, idealBlocks, icalUrl]);
 
     useAutoSave(currentData, {
         onSave: handleSave,
@@ -130,7 +137,7 @@ const WeeklyPlanPage: React.FC = () => {
         if (!loading && user) {
             setDraft(currentData);
         }
-    }, [currentData, loading, user, setDraft]);
+    }, [review, idealBlocks, icalUrl, loading, user, setDraft]);
 
     const handleReviewChange = (field: keyof Omit<WeeklyReviewData, 'nextWeekPriorities'>, value: string) => {
         setReview(r => ({ ...r, [field]: value }));
@@ -298,7 +305,8 @@ const WeeklyPlanPage: React.FC = () => {
                     </button>
                   </div>
                   <p className="mt-1 text-xs text-gray-400">Note: This will fetch and overlay your Google Calendar events on the ideal calendar. Get your secret iCal URL from Google Calendar settings.</p>
-                  {calendarEvents.length > 0 && <p className="mt-1 text-xs text-green-400">✓ {calendarEvents.length} events synced</p>}
+                  {calendarEvents.length > 0 && <p className="mt-1 text-xs text-green-400">✓ {calendarEvents.length} events synced from this week</p>}
+                  {icalUrl && calendarEvents.length === 0 && !fetchingEvents && <p className="mt-1 text-xs text-yellow-400">No events found for this week or invalid URL</p>}
                 </div>
             </Card>
 
