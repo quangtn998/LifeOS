@@ -75,6 +75,7 @@ export interface FocusSessionStats {
     perfectionism: number;
   };
   toolkit: Record<string, number>;
+  recharge: Record<string, number>;
 }
 
 export interface FocusLogData {

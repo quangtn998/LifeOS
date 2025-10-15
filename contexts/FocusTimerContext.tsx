@@ -28,6 +28,7 @@ interface FocusTimerContextType {
   skipToNextPhase: () => void;
   trackDisruptor: (disruptor: keyof FocusSessionStats['disruptors']) => void;
   trackToolUsage: (toolText: string) => void;
+  trackRechargeUsage: (activityText: string) => void;
   formatTime: (seconds: number) => string;
 }
 
@@ -51,7 +52,8 @@ export const FocusTimerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [reflection, setReflection] = useState('');
   const [sessionStats, setSessionStats] = useState<FocusSessionStats>({
     disruptors: { procrastination: 0, distraction: 0, burnout: 0, perfectionism: 0 },
-    toolkit: {}
+    toolkit: {},
+    recharge: {}
   });
 
   const timerRef = useRef<number | null>(null);
@@ -91,6 +93,7 @@ export const FocusTimerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       reflection: reflection,
       disruptors: sessionStats.disruptors,
       toolkit_usage: sessionStats.toolkit,
+      recharge_usage: sessionStats.recharge,
       duration_minutes: PHASES.FOCUS.duration / 60,
     }, { onConflict: 'user_id,date' });
   }, [user, sessionGoal, capturedThoughts, reflection, sessionStats]);
@@ -122,7 +125,7 @@ export const FocusTimerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setSessionGoal('');
     setCapturedThoughts('');
     setReflection('');
-    setSessionStats({ disruptors: { procrastination: 0, distraction: 0, burnout: 0, perfectionism: 0 }, toolkit: {} });
+    setSessionStats({ disruptors: { procrastination: 0, distraction: 0, burnout: 0, perfectionism: 0 }, toolkit: {}, recharge: {} });
   }, []);
 
   const handlePhaseEnd = useCallback(async () => {
@@ -207,6 +210,20 @@ export const FocusTimerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }, { onConflict: 'user_id,date' });
   }, [user, sessionStats]);
 
+  const trackRechargeUsage = useCallback(async (activityText: string) => {
+    setSessionStats(s => ({ ...s, recharge: {...s.recharge, [activityText]: (s.recharge[activityText] || 0) + 1 }}));
+
+    if (!user) return;
+    const today = new Date().toISOString().split('T')[0];
+    const newRecharge = {...sessionStats.recharge, [activityText]: (sessionStats.recharge[activityText] || 0) + 1};
+
+    await supabase.from('focus_sessions').upsert({
+      user_id: user.id,
+      date: today,
+      recharge_usage: newRecharge,
+    }, { onConflict: 'user_id,date' });
+  }, [user, sessionStats]);
+
   const formatTime = (totalSeconds: number) => {
     const mins = Math.floor(totalSeconds / 60);
     const secs = totalSeconds % 60;
@@ -234,6 +251,7 @@ export const FocusTimerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       skipToNextPhase,
       trackDisruptor,
       trackToolUsage,
+      trackRechargeUsage,
       formatTime,
     }}>
       {children}

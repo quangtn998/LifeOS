@@ -21,6 +21,7 @@ interface FocusSessionHistory {
     perfectionism: number;
   };
   toolkit_usage: Record<string, number>;
+  recharge_usage: Record<string, number>;
   duration_minutes: number;
 }
 
@@ -34,6 +35,14 @@ const DEFAULT_TOOLS = {
   activation: [{id: 'd1', text: 'Listen to favorite music'}, {id: 'd2', text: '3-minute breathing'}, {id: 'd3', text: 'Do a super easy admin task'}],
   reactivation: [{id: 'd4', text: '60-second stretch/jump'}, {id: 'd5', text: 'Change music/scenery'}, {id: 'd6', text: 'Move phone to another room'}]
 };
+
+const DEFAULT_RECHARGE = [
+  {id: 'r1', text: 'Take a 10-minute walk'},
+  {id: 'r2', text: 'Stretch or do light yoga'},
+  {id: 'r3', text: 'Make a cup of tea/coffee'},
+  {id: 'r4', text: 'Listen to music'},
+  {id: 'r5', text: 'Step outside for fresh air'}
+];
 
 const FocusTimerPage: React.FC = () => {
     const { user } = useAuth();
@@ -53,11 +62,13 @@ const FocusTimerPage: React.FC = () => {
         skipToNextPhase,
         trackDisruptor,
         trackToolUsage,
+        trackRechargeUsage,
         formatTime,
     } = useFocusTimer();
 
     const [dailyAdventure, setDailyAdventure] = useState<string | null>(null);
     const [customTools, setCustomTools] = useState<{activation: CustomTool[], reactivation: CustomTool[]}>({activation: [], reactivation: []});
+    const [customRecharge, setCustomRecharge] = useState<CustomTool[]>([]);
     const [sessionHistory, setSessionHistory] = useState<FocusSessionHistory[]>([]);
     const [historyLoading, setHistoryLoading] = useState(false);
 
@@ -69,6 +80,10 @@ const FocusTimerPage: React.FC = () => {
                 activation: toolsData.activation || [],
                 reactivation: toolsData.reactivation || [],
             });
+        }
+        const { data: rechargeData } = await supabase.from('custom_recharge').select('*').eq('user_id', user.id).single();
+        if (rechargeData) {
+            setCustomRecharge(rechargeData.activities || []);
         }
         const today = new Date().toISOString().split('T')[0];
         const { data: planData } = await supabase.from('daily_plan').select('manifesto').eq('user_id', user.id).eq('date', today).single();
@@ -120,6 +135,22 @@ const FocusTimerPage: React.FC = () => {
         const updatedTools = {...customTools, [type]: customTools[type].filter(t => t.id !== id)};
         setCustomTools(updatedTools);
         await supabase.from('custom_tools').upsert({ user_id: user.id, ...updatedTools }, { onConflict: 'user_id'});
+    };
+
+    // --- Custom Recharge ---
+    const addCustomRecharge = async (text: string) => {
+        if (!text.trim() || !user) return;
+        const newActivity: CustomTool = { id: uuidv4(), text };
+        const updatedRecharge = [...customRecharge, newActivity];
+        setCustomRecharge(updatedRecharge);
+        await supabase.from('custom_recharge').upsert({ user_id: user.id, activities: updatedRecharge }, { onConflict: 'user_id'});
+    };
+
+    const deleteCustomRecharge = async (id: string) => {
+        if(!user) return;
+        const updatedRecharge = customRecharge.filter(t => t.id !== id);
+        setCustomRecharge(updatedRecharge);
+        await supabase.from('custom_recharge').upsert({ user_id: user.id, activities: updatedRecharge }, { onConflict: 'user_id'});
     };
 
     const phase = PHASES[currentPhase];
@@ -215,9 +246,28 @@ const FocusTimerPage: React.FC = () => {
             )}
             
             {currentPhase === 'REFLECT' && (
-                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                    <Card>
-                        <h3 className="font-bold text-white">Session Summary</h3>
+                 <div className="space-y-6">
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                        <Card>
+                            <h3 className="text-xl font-bold text-white mb-4">Reflect & Recharge (5 minutes)</h3>
+                            <p className="text-sm text-gray-300 mb-4">After 50 minutes, take a break.</p>
+
+                            <div className="space-y-4">
+                                <div className="p-4 bg-gray-900 rounded-lg">
+                                    <h4 className="font-semibold text-yellow-400 mb-2">Reflect (30 seconds):</h4>
+                                    <p className="text-sm text-gray-300 mb-3">"What worked? What distracted me? What can I adjust for next time to focus better?" Small changes can make a big impact.</p>
+                                    <textarea value={reflection} onChange={e => setReflection(e.target.value)} rows={4} placeholder="Write your reflections here..." className="w-full p-3 text-white bg-gray-800 border border-gray-700 rounded-md focus:border-green-500 focus:outline-none"/>
+                                </div>
+
+                                <div className="p-4 bg-gray-900 rounded-lg">
+                                    <h4 className="font-semibold text-green-400 mb-2">Recharge Menu:</h4>
+                                    <p className="text-sm text-gray-300 mb-3">Stand up, stretch, take a walk, make some tea. Have your own "Recharge Menu".</p>
+                                    <RechargeList defaultActivities={DEFAULT_RECHARGE} customActivities={customRecharge} onActivityClick={trackRechargeUsage} onAddActivity={addCustomRecharge} onDeleteActivity={deleteCustomRecharge} rechargeUsage={sessionStats.recharge} />
+                                </div>
+                            </div>
+                        </Card>
+                        <Card>
+                            <h3 className="font-bold text-white">Session Summary</h3>
                         <div className="mt-2 space-y-2 text-sm">
                             <h4 className="font-semibold text-red-400">Disruptors Logged:</h4>
                             {(Object.entries(sessionStats.disruptors) as [string, number][]).filter(([, val]) => val > 0).map(([key, val]) => <p key={key} className="text-gray-400"><span className="capitalize">{key}:</span> {val} times</p>)}
@@ -228,11 +278,7 @@ const FocusTimerPage: React.FC = () => {
                              {Object.values(sessionStats.toolkit).length === 0 && <p className="text-gray-400">None.</p>}
                         </div>
                     </Card>
-                     <Card>
-                        <h3 className="font-bold text-white">Reflection</h3>
-                        <p className="text-sm text-gray-400">What went well? What was distracting? What can you improve?</p>
-                        <textarea value={reflection} onChange={e => setReflection(e.target.value)} rows={5} className="w-full p-2 mt-2 text-white bg-gray-900 border-gray-700 rounded-md"/>
-                    </Card>
+                    </div>
                  </div>
             )}
 
@@ -269,7 +315,7 @@ const FocusTimerPage: React.FC = () => {
                                     </div>
                                 )}
 
-                                <div className="mt-3 grid grid-cols-2 gap-4">
+                                <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-4">
                                     <div>
                                         <p className="text-xs font-semibold text-red-400 mb-1">Disruptors:</p>
                                         {session.disruptors && Object.entries(session.disruptors).filter(([, val]) => val > 0).length > 0 ? (
@@ -287,6 +333,18 @@ const FocusTimerPage: React.FC = () => {
                                         {session.toolkit_usage && Object.keys(session.toolkit_usage).length > 0 ? (
                                             <div className="space-y-1">
                                                 {Object.entries(session.toolkit_usage).slice(0, 3).map(([key, val]) => (
+                                                    <p key={key} className="text-xs text-gray-400 truncate">"{key}": {val}</p>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <p className="text-xs text-gray-400">None</p>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-semibold text-cyan-400 mb-1">Recharge:</p>
+                                        {session.recharge_usage && Object.keys(session.recharge_usage).length > 0 ? (
+                                            <div className="space-y-1">
+                                                {Object.entries(session.recharge_usage).slice(0, 3).map(([key, val]) => (
                                                     <p key={key} className="text-xs text-gray-400 truncate">"{key}": {val}</p>
                                                 ))}
                                             </div>
@@ -336,6 +394,43 @@ const ToolList: React.FC<{type: 'activation'|'reactivation', defaultTools: Custo
             ))}
             <form onSubmit={handleAdd} className="flex items-center gap-2 pt-2">
                 <input value={newToolText} onChange={e => setNewToolText(e.target.value)} type="text" placeholder="Add your own..." className="flex-grow w-full p-1 text-xs text-white bg-gray-900 border-gray-700 rounded-md"/>
+                <button type="submit" className="p-1 text-white bg-cyan-800 rounded-full hover:bg-cyan-700"><PlusCircleIcon className="w-5 h-5"/></button>
+            </form>
+        </div>
+    );
+};
+
+const RechargeList: React.FC<{defaultActivities: CustomTool[], customActivities: CustomTool[], onActivityClick: (text: string) => void, onAddActivity: (text: string) => void, onDeleteActivity: (id: string) => void, rechargeUsage: Record<string, number>}> =
+({defaultActivities, customActivities, onActivityClick, onAddActivity, onDeleteActivity, rechargeUsage}) => {
+    const [newActivityText, setNewActivityText] = useState('');
+    const handleAdd = (e: React.FormEvent) => {
+        e.preventDefault();
+        onAddActivity(newActivityText);
+        setNewActivityText('');
+    };
+    return (
+        <div className="mt-2 space-y-2">
+            {[...defaultActivities, ...customActivities].map(activity => (
+                <div key={activity.id} className="flex items-center group">
+                    <button onClick={() => onActivityClick(activity.text)} className="flex-grow px-2 py-1 text-xs text-left text-white bg-gray-700/50 rounded-md hover:bg-gray-600/50 transition-colors">
+                        <span className="flex items-center justify-between">
+                            <span>- {activity.text}</span>
+                            {rechargeUsage[activity.text] > 0 && (
+                                <span className="ml-2 px-1.5 py-0.5 text-xs bg-cyan-600/70 text-white rounded-full">
+                                    {rechargeUsage[activity.text]}
+                                </span>
+                            )}
+                        </span>
+                    </button>
+                    {!defaultActivities.find(t => t.id === activity.id) && (
+                        <button onClick={() => onDeleteActivity(activity.id)} className="ml-2 text-red-800 opacity-0 group-hover:opacity-100 hover:text-red-500">
+                            <TrashIcon className="w-4 h-4"/>
+                        </button>
+                    )}
+                </div>
+            ))}
+            <form onSubmit={handleAdd} className="flex items-center gap-2 pt-2">
+                <input value={newActivityText} onChange={e => setNewActivityText(e.target.value)} type="text" placeholder="Add your own recharge activity..." className="flex-grow w-full p-1 text-xs text-white bg-gray-900 border-gray-700 rounded-md"/>
                 <button type="submit" className="p-1 text-white bg-cyan-800 rounded-full hover:bg-cyan-700"><PlusCircleIcon className="w-5 h-5"/></button>
             </form>
         </div>
