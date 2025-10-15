@@ -1,8 +1,9 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { FocusTimerProvider } from './contexts/FocusTimerContext';
 import ProtectedRoute from './components/ProtectedRoute';
-
+import FloatingTimer from './components/FloatingTimer';
 
 import Sidebar from './components/Sidebar';
 import Dashboard from './pages/Dashboard';
@@ -22,6 +23,7 @@ const AppLayout: React.FC = () => (
     <main className="flex-1 p-4 sm:p-6 lg:p-10 overflow-y-auto">
       <Outlet />
     </main>
+    <FloatingTimer />
   </div>
 );
 
@@ -29,22 +31,24 @@ const App: React.FC = () => {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/signup" element={<SignupPage />} />
-          <Route element={<ProtectedRoute />}>
-            <Route element={<AppLayout />}>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/learn" element={<LearnPage />} />
-              <Route path="/vision/life-compass" element={<LifeCompassPage />} />
-              <Route path="/vision/future-sketch" element={<FutureSketchPage />} />
-              <Route path="/vision/quarterly-quests" element={<QuarterlyQuestsPage />} />
-              <Route path="/action/focus-timer" element={<FocusTimerPage />} />
-              <Route path="/action/daily-plan" element={<DailyPlanPage />} />
-              <Route path="/action/weekly-plan" element={<WeeklyPlanPage />} />
+        <FocusTimerProvider>
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<SignupPage />} />
+            <Route element={<ProtectedRoute />}>
+              <Route element={<AppLayout />}>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/learn" element={<LearnPage />} />
+                <Route path="/vision/life-compass" element={<LifeCompassPage />} />
+                <Route path="/vision/future-sketch" element={<FutureSketchPage />} />
+                <Route path="/vision/quarterly-quests" element={<QuarterlyQuestsPage />} />
+                <Route path="/action/focus-timer" element={<FocusTimerPage />} />
+                <Route path="/action/daily-plan" element={<DailyPlanPage />} />
+                <Route path="/action/weekly-plan" element={<WeeklyPlanPage />} />
+              </Route>
             </Route>
-          </Route>
-        </Routes>
+          </Routes>
+        </FocusTimerProvider>
       </AuthProvider>
     </BrowserRouter>
   );

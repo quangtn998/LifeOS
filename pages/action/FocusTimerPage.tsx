@@ -1,15 +1,16 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../contexts/AuthContext';
+import { useFocusTimer } from '../../contexts/FocusTimerContext';
 import Card from '../../components/Card';
 import { PlayIcon, PauseIcon, RefreshCwIcon, PlusCircleIcon, TrashIcon } from '../../components/icons/Icons';
-import { FocusSessionStats, CustomTool, DailyPlan, FocusLogData } from '../../types';
+import { CustomTool, DailyPlan } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
 
 const PHASES = {
-  PLAN: { name: 'PLAN & ORGANIZE', duration: 5 * 60, color: 'text-yellow-400' },
-  FOCUS: { name: 'FOCUS', duration: 50 * 60, color: 'text-cyan-400' },
-  REFLECT: { name: 'REFLECT & RECHARGE', duration: 5 * 60, color: 'text-green-400' },
+  PLAN: { name: 'PLAN & ORGANIZE', color: 'text-yellow-400' },
+  FOCUS: { name: 'FOCUS', color: 'text-cyan-400' },
+  REFLECT: { name: 'REFLECT & RECHARGE', color: 'text-green-400' },
 };
 
 const DEFAULT_TOOLS = {
@@ -19,27 +20,29 @@ const DEFAULT_TOOLS = {
 
 const FocusTimerPage: React.FC = () => {
     const { user } = useAuth();
-    const [secondsLeft, setSecondsLeft] = useState(PHASES.PLAN.duration);
-    const [isActive, setIsActive] = useState(false);
-    const [currentPhase, setCurrentPhase] = useState<'PLAN' | 'FOCUS' | 'REFLECT'>('PLAN');
-    
-    // State for interactive elements
-    const [sessionGoal, setSessionGoal] = useState('');
-    const [dailyAdventure, setDailyAdventure] = useState<string | null>(null);
-    const [capturedThoughts, setCapturedThoughts] = useState('');
-    const [reflection, setReflection] = useState('');
-    const [sessionStats, setSessionStats] = useState<FocusSessionStats>({ disruptors: { procrastination: 0, distraction: 0, burnout: 0, perfectionism: 0 }, toolkit: {} });
-    const [customTools, setCustomTools] = useState<{activation: CustomTool[], reactivation: CustomTool[]}>({activation: [], reactivation: []});
-    
-    const planEndAudio = useRef<HTMLAudioElement>(null);
-    const focusEndAudio = useRef<HTMLAudioElement>(null);
-    const reflectEndAudio = useRef<HTMLAudioElement>(null);
-    const timerRef = useRef<number | null>(null);
+    const {
+        secondsLeft,
+        isActive,
+        currentPhase,
+        sessionGoal,
+        sessionStats,
+        capturedThoughts,
+        reflection,
+        setSessionGoal,
+        setCapturedThoughts,
+        setReflection,
+        toggleTimer,
+        resetTimer,
+        trackDisruptor,
+        trackToolUsage,
+        formatTime,
+    } = useFocusTimer();
 
-    // --- Data Fetching ---
+    const [dailyAdventure, setDailyAdventure] = useState<string | null>(null);
+    const [customTools, setCustomTools] = useState<{activation: CustomTool[], reactivation: CustomTool[]}>({activation: [], reactivation: []});
+
     const fetchData = useCallback(async () => {
         if (!user) return;
-        // Fetch custom tools
         const { data: toolsData } = await supabase.from('custom_tools').select('*').eq('user_id', user.id).single();
         if (toolsData) {
             setCustomTools({
@@ -47,84 +50,18 @@ const FocusTimerPage: React.FC = () => {
                 reactivation: toolsData.reactivation || [],
             });
         }
-        // Fetch daily adventure for "Golden Thread"
         const today = new Date().toISOString().split('T')[0];
         const { data: planData } = await supabase.from('daily_plan').select('manifesto').eq('user_id', user.id).eq('date', today).single();
         if (planData) {
             setDailyAdventure((planData.manifesto as DailyPlan['manifesto'])?.adventure || null);
         }
-    }, [user]);
+        const { data: sessionData } = await supabase.from('focus_sessions').select('goal').eq('user_id', user.id).eq('date', today).maybeSingle();
+        if (sessionData?.goal) {
+            setSessionGoal(sessionData.goal);
+        }
+    }, [user, setSessionGoal]);
 
     useEffect(() => { fetchData(); }, [fetchData]);
-
-    const resetTimer = useCallback(() => {
-      setIsActive(false);
-      setCurrentPhase('PLAN');
-      setSecondsLeft(PHASES.PLAN.duration);
-      setSessionGoal('');
-      setCapturedThoughts('');
-      setReflection('');
-      setSessionStats({ disruptors: { procrastination: 0, distraction: 0, burnout: 0, perfectionism: 0 }, toolkit: {} });
-    }, []);
-
-    const logFocusSession = useCallback(async (duration: number) => {
-        if (!user) return;
-        const today = new Date().toISOString().split('T')[0];
-        
-        const { data: log, error: fetchError } = await supabase.from('focus_log').select('data').eq('user_id', user.id).single();
-        if(fetchError && fetchError.code !== 'PGRST116') console.error(fetchError);
-
-        const newLogData: FocusLogData = log?.data || {};
-        newLogData[today] = (newLogData[today] || 0) + duration;
-
-        const { error } = await supabase.from('focus_log').upsert({ user_id: user.id, data: newLogData }, { onConflict: 'user_id'});
-        if(error) console.error("Error logging session:", error);
-    }, [user]);
-    
-    const handlePhaseEnd = useCallback(async () => {
-      if (currentPhase === 'PLAN') {
-        planEndAudio.current?.play();
-        setCurrentPhase('FOCUS');
-        setSecondsLeft(PHASES.FOCUS.duration);
-      } else if (currentPhase === 'FOCUS') {
-        focusEndAudio.current?.play();
-        await logFocusSession(PHASES.FOCUS.duration / 60);
-        setCurrentPhase('REFLECT');
-        setSecondsLeft(PHASES.REFLECT.duration);
-      } else if (currentPhase === 'REFLECT') {
-        reflectEndAudio.current?.play();
-        resetTimer();
-      }
-    }, [currentPhase, logFocusSession, resetTimer]);
-
-    // --- Timer Logic ---
-    useEffect(() => {
-        if (isActive) {
-            timerRef.current = window.setInterval(() => {
-                setSecondsLeft(s => s - 1);
-            }, 1000);
-        } else if (timerRef.current) {
-            clearInterval(timerRef.current);
-        }
-        return () => { if (timerRef.current) clearInterval(timerRef.current); };
-    }, [isActive]);
-
-    useEffect(() => {
-      if(secondsLeft < 0) {
-        handlePhaseEnd();
-      }
-    }, [secondsLeft, handlePhaseEnd]);
-
-    const toggleTimer = () => setIsActive(!isActive);
-
-    // --- Logging and Stats ---
-    const trackDisruptor = (disruptor: keyof FocusSessionStats['disruptors']) => {
-        setSessionStats(s => ({ ...s, disruptors: {...s.disruptors, [disruptor]: s.disruptors[disruptor] + 1 }}));
-    };
-    
-    const trackToolUsage = (toolText: string) => {
-        setSessionStats(s => ({ ...s, toolkit: {...s.toolkit, [toolText]: (s.toolkit[toolText] || 0) + 1 }}));
-    };
 
     // --- Custom Tools ---
     const addCustomTool = async (type: 'activation' | 'reactivation', text: string) => {
@@ -140,12 +77,6 @@ const FocusTimerPage: React.FC = () => {
         const updatedTools = {...customTools, [type]: customTools[type].filter(t => t.id !== id)};
         setCustomTools(updatedTools);
         await supabase.from('custom_tools').upsert({ user_id: user.id, ...updatedTools }, { onConflict: 'user_id'});
-    };
-
-    const formatTime = (totalSeconds: number) => {
-      const mins = Math.floor(totalSeconds / 60);
-      const secs = totalSeconds % 60;
-      return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
     };
 
     const phase = PHASES[currentPhase];
@@ -239,10 +170,6 @@ const FocusTimerPage: React.FC = () => {
                  </div>
             )}
 
-            {/* Audio elements */}
-            <audio ref={planEndAudio} src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=" />
-            <audio ref={focusEndAudio} src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQwwAAAAAP//A/8E/wX/Bv8I/wz/D/8T/xb/Gf8f/yn/Lv80/zf/Qv9I/0z/Uv9c/2P/b/9z/3f/gv+H/4z/kP+U/5r/o/+p/63/sv+5/7//xP/H/8n/zv/T/9j/2v/f/9//4f/k/+b/6P/s/+7/8v/0//b/+//8//8A" />
-            <audio ref={reflectEndAudio} src="data:audio/wav;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQIAAAD//v8A/wE=" />
         </div>
     );
 };
