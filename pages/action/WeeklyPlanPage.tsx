@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../contexts/AuthContext';
 import Card from '../../components/Card';
-import { WeeklyReviewData, IdealBlock, DailyTask, Quest } from '../../types';
+import { WeeklyReviewData, IdealBlock, DailyTask, Quest, CalendarEvent } from '../../types';
 import { PlusCircleIcon, SaveIcon, TrashIcon, ZapIcon, CheckCircleIcon } from '../../components/icons/Icons';
 import { v4 as uuidv4 } from 'uuid';
 import { useAutoSave } from '../../hooks/useAutoSave';
@@ -30,6 +30,8 @@ const WeeklyPlanPage: React.FC = () => {
     const [icalUrl, setIcalUrl] = useState('');
     const [loading, setLoading] = useState(true);
     const [lastSaved, setLastSaved] = useState<Date | null>(null);
+    const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
+    const [fetchingEvents, setFetchingEvents] = useState(false);
 
     // For Golden Thread
     const [quests, setQuests] = useState<Quest[]>([]);
@@ -66,6 +68,40 @@ const WeeklyPlanPage: React.FC = () => {
 
         setLoading(false);
     }, [user, weekStartDate]);
+
+    const fetchCalendarEvents = useCallback(async () => {
+        if (!icalUrl || !user) return;
+        setFetchingEvents(true);
+        try {
+            const response = await fetch(
+                `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-ical`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ icalUrl }),
+                }
+            );
+            const data = await response.json();
+            if (data.events) {
+                setCalendarEvents(data.events);
+            }
+        } catch (error) {
+            console.error('Error fetching calendar events:', error);
+        } finally {
+            setFetchingEvents(false);
+        }
+    }, [icalUrl, user]);
+
+    useEffect(() => {
+        if (icalUrl) {
+            fetchCalendarEvents();
+        } else {
+            setCalendarEvents([]);
+        }
+    }, [icalUrl, fetchCalendarEvents]);
 
     useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -132,6 +168,36 @@ const WeeklyPlanPage: React.FC = () => {
       setIdealBlocks(blocks => blocks.filter(b => b.id !== id));
     };
 
+    // Convert calendar events to blocks for display
+    const getCalendarEventBlocks = useCallback(() => {
+        return calendarEvents
+            .filter(event => {
+                const eventStart = new Date(event.start);
+                const eventEnd = new Date(event.end);
+                const weekEnd = new Date(weekStartDate);
+                weekEnd.setDate(weekEnd.getDate() + 7);
+                return eventStart >= weekStartDate && eventStart < weekEnd;
+            })
+            .map(event => {
+                const eventStart = new Date(event.start);
+                const eventEnd = new Date(event.end);
+                const dayOfWeek = eventStart.getDay();
+                const day = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Convert to Mon=0, Sun=6
+                const startHour = eventStart.getHours() + eventStart.getMinutes() / 60;
+                const endHour = eventEnd.getHours() + eventEnd.getMinutes() / 60;
+
+                return {
+                    id: `event-${event.start}`,
+                    day,
+                    startTime: startHour,
+                    endTime: endHour,
+                    title: event.summary,
+                    color: 'bg-orange-500/60',
+                    isCalendarEvent: true,
+                };
+            });
+    }, [calendarEvents, weekStartDate]);
+
     if (loading) return <div className="text-center p-8">Loading your weekly plan...</div>;
     
     return (
@@ -193,6 +259,7 @@ const WeeklyPlanPage: React.FC = () => {
                     </div>
                     {/* Render blocks */}
                     <div className="absolute top-0 left-0 w-full h-full pointer-events-none" style={{minWidth: '800px', paddingTop: '40px', paddingLeft: 'calc(100% / 8)'}}>
+                        {/* Render ideal blocks */}
                         {idealBlocks.map(block => (
                             <div key={block.id} className={`absolute flex items-center justify-center p-1 text-xs text-white rounded-md shadow-lg cursor-pointer pointer-events-auto ${block.color}`}
                                 style={{
@@ -206,12 +273,32 @@ const WeeklyPlanPage: React.FC = () => {
                               <button onClick={() => deleteBlock(block.id)} className="absolute top-0 right-0 p-0.5 bg-black/30 rounded-full opacity-0 hover:opacity-100"><TrashIcon className="w-3 h-3"/></button>
                             </div>
                         ))}
+                        {/* Render calendar events */}
+                        {getCalendarEventBlocks().map(block => (
+                            <div key={block.id} className={`absolute flex items-center justify-center p-1 text-xs text-white rounded-md shadow-lg border-2 border-orange-300 ${block.color}`}
+                                style={{
+                                    left: `${(block.day / 7) * 100}%`,
+                                    top: `${(block.startTime / 24) * 100}%`,
+                                    width: `${(1 / 7) * 100}%`,
+                                    height: `${((block.endTime - block.startTime) / 24) * 100}%`
+                                }}
+                                title={`Calendar Event: ${block.title}`}
+                            >
+                              <span className="text-xs text-center truncate">{block.title}</span>
+                            </div>
+                        ))}
                     </div>
                 </div>
                 <div className="mt-4">
                   <label className="text-sm font-semibold">Google Calendar iCal URL (optional)</label>
-                  <input type="url" value={icalUrl} onChange={e => setIcalUrl(e.target.value)} placeholder="Paste your secret iCal address here to sync events" className="w-full p-2 mt-1 text-white bg-gray-900 border-gray-700 rounded-md"/>
-                  <p className="mt-1 text-xs text-gray-400">Note: iCal sync is for display only and might be slow. This will overlay your real events on the ideal calendar.</p>
+                  <div className="flex gap-2">
+                    <input type="url" value={icalUrl} onChange={e => setIcalUrl(e.target.value)} placeholder="Paste your secret iCal address here to sync events" className="flex-1 p-2 mt-1 text-white bg-gray-900 border-gray-700 rounded-md"/>
+                    <button onClick={fetchCalendarEvents} disabled={!icalUrl || fetchingEvents} className="px-4 py-2 mt-1 text-sm font-semibold text-white bg-cyan-500 rounded-md hover:bg-cyan-600 disabled:opacity-50">
+                      {fetchingEvents ? 'Syncing...' : 'Sync Now'}
+                    </button>
+                  </div>
+                  <p className="mt-1 text-xs text-gray-400">Note: This will fetch and overlay your Google Calendar events on the ideal calendar. Get your secret iCal URL from Google Calendar settings.</p>
+                  {calendarEvents.length > 0 && <p className="mt-1 text-xs text-green-400">✓ {calendarEvents.length} events synced</p>}
                 </div>
             </Card>
 

@@ -127,8 +127,9 @@ export interface WeeklyReviewData {
     plan_adjustments: string;
 }
 
-export interface SyncedEvent {
-    title: string;
-    startTime: Date;
-    endTime: Date;
+export interface CalendarEvent {
+    summary: string;
+    start: string;
+    end: string;
+    description?: string;
 }
