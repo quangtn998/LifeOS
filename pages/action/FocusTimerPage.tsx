@@ -194,11 +194,11 @@ const FocusTimerPage: React.FC = () => {
                         <h3 className="font-bold text-white">Focus Toolkit</h3>
                         <div className="mt-2">
                           <h4 className="font-semibold text-yellow-400">Activation Menu (to start)</h4>
-                          <ToolList type="activation" defaultTools={DEFAULT_TOOLS.activation} customTools={customTools.activation} onToolClick={trackToolUsage} onAddTool={addCustomTool} onDeleteTool={deleteCustomTool} />
+                          <ToolList type="activation" defaultTools={DEFAULT_TOOLS.activation} customTools={customTools.activation} onToolClick={trackToolUsage} onAddTool={addCustomTool} onDeleteTool={deleteCustomTool} toolkitUsage={sessionStats.toolkit} />
                         </div>
                          <div className="mt-4">
                           <h4 className="font-semibold text-green-400">Reactivation Menu (to refocus)</h4>
-                          <ToolList type="reactivation" defaultTools={DEFAULT_TOOLS.reactivation} customTools={customTools.reactivation} onToolClick={trackToolUsage} onAddTool={addCustomTool} onDeleteTool={deleteCustomTool} />
+                          <ToolList type="reactivation" defaultTools={DEFAULT_TOOLS.reactivation} customTools={customTools.reactivation} onToolClick={trackToolUsage} onAddTool={addCustomTool} onDeleteTool={deleteCustomTool} toolkitUsage={sessionStats.toolkit} />
                         </div>
                         <div className="mt-4">
                             <h4 className="font-semibold text-red-400">Focus Disruptors</h4>
@@ -305,8 +305,8 @@ const FocusTimerPage: React.FC = () => {
 };
 
 
-const ToolList: React.FC<{type: 'activation'|'reactivation', defaultTools: CustomTool[], customTools: CustomTool[], onToolClick: (text: string) => void, onAddTool: (type: 'activation'|'reactivation', text: string) => void, onDeleteTool: (type: 'activation'|'reactivation', id: string) => void}> = 
-({type, defaultTools, customTools, onToolClick, onAddTool, onDeleteTool}) => {
+const ToolList: React.FC<{type: 'activation'|'reactivation', defaultTools: CustomTool[], customTools: CustomTool[], onToolClick: (text: string) => void, onAddTool: (type: 'activation'|'reactivation', text: string) => void, onDeleteTool: (type: 'activation'|'reactivation', id: string) => void, toolkitUsage: Record<string, number>}> =
+({type, defaultTools, customTools, onToolClick, onAddTool, onDeleteTool, toolkitUsage}) => {
     const [newToolText, setNewToolText] = useState('');
     const handleAdd = (e: React.FormEvent) => {
         e.preventDefault();
@@ -317,8 +317,15 @@ const ToolList: React.FC<{type: 'activation'|'reactivation', defaultTools: Custo
         <div className="mt-2 space-y-2">
             {[...defaultTools, ...customTools].map(tool => (
                 <div key={tool.id} className="flex items-center group">
-                    <button onClick={() => onToolClick(tool.text)} className="flex-grow px-2 py-1 text-xs text-left text-white bg-gray-700/50 rounded-md hover:bg-gray-600/50">
-                        - {tool.text}
+                    <button onClick={() => onToolClick(tool.text)} className="flex-grow px-2 py-1 text-xs text-left text-white bg-gray-700/50 rounded-md hover:bg-gray-600/50 transition-colors">
+                        <span className="flex items-center justify-between">
+                            <span>- {tool.text}</span>
+                            {toolkitUsage[tool.text] > 0 && (
+                                <span className="ml-2 px-1.5 py-0.5 text-xs bg-green-600/70 text-white rounded-full">
+                                    {toolkitUsage[tool.text]}
+                                </span>
+                            )}
+                        </span>
                     </button>
                     {!defaultTools.find(t => t.id === tool.id) && (
                         <button onClick={() => onDeleteTool(type, tool.id)} className="ml-2 text-red-800 opacity-0 group-hover:opacity-100 hover:text-red-500">

@@ -179,13 +179,33 @@ export const FocusTimerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   }, [currentPhase, logFocusSession, resetTimer, saveSessionData]);
 
-  const trackDisruptor = (disruptor: keyof FocusSessionStats['disruptors']) => {
+  const trackDisruptor = useCallback(async (disruptor: keyof FocusSessionStats['disruptors']) => {
     setSessionStats(s => ({ ...s, disruptors: {...s.disruptors, [disruptor]: s.disruptors[disruptor] + 1 }}));
-  };
 
-  const trackToolUsage = (toolText: string) => {
+    if (!user) return;
+    const today = new Date().toISOString().split('T')[0];
+    const newDisruptors = {...sessionStats.disruptors, [disruptor]: sessionStats.disruptors[disruptor] + 1};
+
+    await supabase.from('focus_sessions').upsert({
+      user_id: user.id,
+      date: today,
+      disruptors: newDisruptors,
+    }, { onConflict: 'user_id,date' });
+  }, [user, sessionStats]);
+
+  const trackToolUsage = useCallback(async (toolText: string) => {
     setSessionStats(s => ({ ...s, toolkit: {...s.toolkit, [toolText]: (s.toolkit[toolText] || 0) + 1 }}));
-  };
+
+    if (!user) return;
+    const today = new Date().toISOString().split('T')[0];
+    const newToolkit = {...sessionStats.toolkit, [toolText]: (sessionStats.toolkit[toolText] || 0) + 1};
+
+    await supabase.from('focus_sessions').upsert({
+      user_id: user.id,
+      date: today,
+      toolkit_usage: newToolkit,
+    }, { onConflict: 'user_id,date' });
+  }, [user, sessionStats]);
 
   const formatTime = (totalSeconds: number) => {
     const mins = Math.floor(totalSeconds / 60);
