@@ -85,8 +85,12 @@ const WeeklyPlanPage: React.FC = () => {
                 }
             );
             const data = await response.json();
+            console.log('Fetched calendar data:', data);
             if (data.events) {
+                console.log(`Total events received: ${data.events.length}`);
                 setCalendarEvents(data.events);
+            } else if (data.error) {
+                console.error('iCal fetch error:', data.error);
             }
         } catch (error) {
             console.error('Error fetching calendar events:', error);
@@ -177,32 +181,38 @@ const WeeklyPlanPage: React.FC = () => {
 
     // Convert calendar events to blocks for display
     const getCalendarEventBlocks = useCallback(() => {
-        return calendarEvents
-            .filter(event => {
-                const eventStart = new Date(event.start);
-                const eventEnd = new Date(event.end);
-                const weekEnd = new Date(weekStartDate);
-                weekEnd.setDate(weekEnd.getDate() + 7);
-                return eventStart >= weekStartDate && eventStart < weekEnd;
-            })
-            .map(event => {
-                const eventStart = new Date(event.start);
-                const eventEnd = new Date(event.end);
-                const dayOfWeek = eventStart.getDay();
-                const day = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Convert to Mon=0, Sun=6
-                const startHour = eventStart.getHours() + eventStart.getMinutes() / 60;
-                const endHour = eventEnd.getHours() + eventEnd.getMinutes() / 60;
+        const weekEnd = new Date(weekStartDate);
+        weekEnd.setDate(weekEnd.getDate() + 7);
 
-                return {
-                    id: `event-${event.start}`,
-                    day,
-                    startTime: startHour,
-                    endTime: endHour,
-                    title: event.summary,
-                    color: 'bg-orange-500/60',
-                    isCalendarEvent: true,
-                };
-            });
+        const filtered = calendarEvents.filter(event => {
+            const eventStart = new Date(event.start);
+            const isInWeek = eventStart >= weekStartDate && eventStart < weekEnd;
+            return isInWeek;
+        });
+
+        console.log(`Week: ${weekStartDate.toISOString()} to ${weekEnd.toISOString()}`);
+        console.log(`Events in current week: ${filtered.length} out of ${calendarEvents.length}`);
+
+        return filtered.map(event => {
+            const eventStart = new Date(event.start);
+            const eventEnd = new Date(event.end);
+            const dayOfWeek = eventStart.getDay();
+            const day = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+            const startHour = eventStart.getHours() + eventStart.getMinutes() / 60;
+            const endHour = eventEnd.getHours() + eventEnd.getMinutes() / 60;
+
+            console.log(`Event: ${event.summary}, Day: ${day}, Start: ${startHour}h, End: ${endHour}h`);
+
+            return {
+                id: `event-${event.start}`,
+                day,
+                startTime: startHour,
+                endTime: endHour,
+                title: event.summary,
+                color: 'bg-orange-500/60',
+                isCalendarEvent: true,
+            };
+        });
     }, [calendarEvents, weekStartDate]);
 
     if (loading) return <div className="text-center p-8">Loading your weekly plan...</div>;

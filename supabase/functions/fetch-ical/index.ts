@@ -14,13 +14,9 @@ interface CalendarEvent {
 }
 
 function parseICalDate(dateStr: string): Date {
-  // Handle both DATE and DATETIME formats
-  // DATETIME: 20240315T100000Z or 20240315T100000
-  // DATE: 20240315
-  const cleanStr = dateStr.replace(/[:\-]/g, '');
+  const cleanStr = dateStr.replace(/[:\-]/g, '').trim();
   
   if (cleanStr.includes('T')) {
-    // DateTime format
     const year = parseInt(cleanStr.substring(0, 4));
     const month = parseInt(cleanStr.substring(4, 6)) - 1;
     const day = parseInt(cleanStr.substring(6, 8));
@@ -33,12 +29,17 @@ function parseICalDate(dateStr: string): Date {
     }
     return new Date(year, month, day, hour, minute, second);
   } else {
-    // Date only format
     const year = parseInt(cleanStr.substring(0, 4));
     const month = parseInt(cleanStr.substring(4, 6)) - 1;
     const day = parseInt(cleanStr.substring(6, 8));
-    return new Date(year, month, day);
+    return new Date(year, month, day, 0, 0, 0);
   }
+}
+
+function extractDateValue(line: string): string | null {
+  const colonIndex = line.lastIndexOf(':');
+  if (colonIndex === -1) return null;
+  return line.substring(colonIndex + 1).trim();
 }
 
 function parseICalData(icalText: string): CalendarEvent[] {
@@ -46,12 +47,10 @@ function parseICalData(icalText: string): CalendarEvent[] {
   const lines = icalText.split(/\r?\n/);
   
   let currentEvent: Partial<CalendarEvent> | null = null;
-  let currentField = '';
   
   for (let i = 0; i < lines.length; i++) {
     let line = lines[i];
     
-    // Handle line folding (lines starting with space or tab)
     while (i + 1 < lines.length && (lines[i + 1].startsWith(' ') || lines[i + 1].startsWith('\t'))) {
       line += lines[i + 1].substring(1);
       i++;
@@ -68,14 +67,22 @@ function parseICalData(icalText: string): CalendarEvent[] {
       if (line.startsWith('SUMMARY:')) {
         currentEvent.summary = line.substring(8);
       } else if (line.startsWith('DTSTART')) {
-        const value = line.split(':')[1];
+        const value = extractDateValue(line);
         if (value) {
-          currentEvent.start = parseICalDate(value).toISOString();
+          try {
+            currentEvent.start = parseICalDate(value).toISOString();
+          } catch (e) {
+            console.error('Failed to parse DTSTART:', value, e);
+          }
         }
       } else if (line.startsWith('DTEND')) {
-        const value = line.split(':')[1];
+        const value = extractDateValue(line);
         if (value) {
-          currentEvent.end = parseICalDate(value).toISOString();
+          try {
+            currentEvent.end = parseICalDate(value).toISOString();
+          } catch (e) {
+            console.error('Failed to parse DTEND:', value, e);
+          }
         }
       } else if (line.startsWith('DESCRIPTION:')) {
         currentEvent.description = line.substring(12);
@@ -110,7 +117,6 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Fetch iCal data
     const response = await fetch(icalUrl);
     if (!response.ok) {
       throw new Error(`Failed to fetch iCal: ${response.statusText}`);
@@ -120,7 +126,7 @@ Deno.serve(async (req: Request) => {
     const events = parseICalData(icalText);
 
     return new Response(
-      JSON.stringify({ events }),
+      JSON.stringify({ events, count: events.length }),
       {
         headers: {
           ...corsHeaders,
