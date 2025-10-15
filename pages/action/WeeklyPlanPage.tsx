@@ -1,0 +1,214 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { supabase } from '../../lib/supabaseClient';
+import { useAuth } from '../../contexts/AuthContext';
+import Card from '../../components/Card';
+import { WeeklyReviewData, IdealBlock, DailyTask, Quest } from '../../types';
+import { PlusCircleIcon, SaveIcon, TrashIcon, ZapIcon, CheckCircleIcon } from '../../components/icons/Icons';
+import { v4 as uuidv4 } from 'uuid';
+
+const getStartOfWeek = (date: Date) => {
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
+    return new Date(d.setDate(diff));
+};
+
+const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const HOURS = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`);
+const COLORS = ['bg-red-500/70', 'bg-yellow-500/70', 'bg-green-500/70', 'bg-blue-500/70', 'bg-indigo-500/70', 'bg-purple-500/70', 'bg-pink-500/70'];
+
+const WeeklyPlanPage: React.FC = () => {
+    const { user } = useAuth();
+    const [weekStartDate, setWeekStartDate] = useState(getStartOfWeek(new Date()));
+    const [review, setReview] = useState<WeeklyReviewData>({ week_start_date: weekStartDate.toISOString().split('T')[0], wins: '', challenges: '', nextWeekPriorities: [], quests_status: '', plan_adjustments: ''});
+    const [idealBlocks, setIdealBlocks] = useState<IdealBlock[]>([]);
+    const [icalUrl, setIcalUrl] = useState('');
+    const [loading, setLoading] = useState(true);
+    
+    // For Golden Thread
+    const [quests, setQuests] = useState<Quest[]>([]);
+    const [showQuests, setShowQuests] = useState(false);
+
+    const fetchData = useCallback(async () => {
+        if (!user) return;
+        setLoading(true);
+        const startDateStr = weekStartDate.toISOString().split('T')[0];
+
+        // Fetch weekly review
+        const { data: reviewData } = await supabase.from('weekly_review').select('*').eq('user_id', user.id).eq('week_start_date', startDateStr).single();
+        if (reviewData) setReview(reviewData);
+        else setReview({ week_start_date: startDateStr, wins: '', challenges: '', nextWeekPriorities: [], quests_status: '', plan_adjustments: ''});
+
+        // Fetch ideal week
+        const { data: weekData } = await supabase.from('ideal_week').select('blocks, ical_url').eq('user_id', user.id).single();
+        if (weekData) {
+            setIdealBlocks(weekData.blocks || []);
+            setIcalUrl(weekData.ical_url || '');
+        }
+
+        // Fetch quests for Golden Thread
+        const { data: questsData } = await supabase.from('quests').select('*').eq('user_id', user.id).eq('completed', false);
+        if (questsData) setQuests(questsData);
+
+        setLoading(false);
+    }, [user, weekStartDate]);
+
+    useEffect(() => { fetchData(); }, [fetchData]);
+
+    const handleSave = async () => {
+        if (!user) return;
+        
+        // Save Review
+        await supabase.from('weekly_review').upsert({ ...review, user_id: user.id }, { onConflict: 'user_id, week_start_date' });
+        
+        // Save Ideal Week
+        await supabase.from('ideal_week').upsert({ user_id: user.id, blocks: idealBlocks, ical_url: icalUrl }, { onConflict: 'user_id' });
+    };
+
+    const handleReviewChange = (field: keyof Omit<WeeklyReviewData, 'nextWeekPriorities'>, value: string) => {
+        setReview(r => ({ ...r, [field]: value }));
+    };
+
+    // --- Priorities Handlers ---
+    const addPriority = (text: string) => {
+      if(!text.trim()) return;
+      const newPriority: DailyTask = { id: uuidv4(), text, completed: false };
+      setReview(r => ({...r, nextWeekPriorities: [...r.nextWeekPriorities, newPriority]}));
+    };
+    const togglePriority = (id: string) => {
+      setReview(r => ({...r, nextWeekPriorities: r.nextWeekPriorities.map(p => p.id === id ? {...p, completed: !p.completed} : p)}));
+    };
+    const deletePriority = (id: string) => {
+       setReview(r => ({...r, nextWeekPriorities: r.nextWeekPriorities.filter(p => p.id !== id)}));
+    };
+    const addPriorityFromQuest = (questTitle: string) => {
+      addPriority(questTitle);
+      setShowQuests(false);
+    }
+    
+    // --- Calendar Handlers ---
+    const addBlock = (day: number, startTime: number) => {
+      const newBlock: IdealBlock = {
+        id: uuidv4(), day, startTime, endTime: startTime + 1,
+        title: 'New Block', color: COLORS[Math.floor(Math.random() * COLORS.length)]
+      };
+      setIdealBlocks(b => [...b, newBlock]);
+    };
+    const updateBlock = (id: string, updatedBlock: Partial<IdealBlock>) => {
+      setIdealBlocks(blocks => blocks.map(b => b.id === id ? {...b, ...updatedBlock} : b));
+    };
+    const deleteBlock = (id: string) => {
+      setIdealBlocks(blocks => blocks.filter(b => b.id !== id));
+    };
+
+    if (loading) return <div className="text-center p-8">Loading your weekly plan...</div>;
+    
+    return (
+        <div className="space-y-8">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-white">Weekly Plan</h1>
+                <p className="mt-2 text-gray-400">Plan for {weekStartDate.toLocaleDateString()} - {new Date(weekStartDate.getTime() + 6 * 24 * 60 * 60 * 1000).toLocaleDateString()}</p>
+              </div>
+              <button onClick={handleSave} className="mt-4 md:mt-0 flex items-center justify-center px-4 py-2 font-bold text-white bg-cyan-500 rounded-md hover:bg-cyan-600">
+                  <SaveIcon className="w-5 h-5 mr-2" /> Save Plan
+              </button>
+            </div>
+            
+            <Card>
+                <h2 className="text-xl font-bold">Weekly Review</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
+                    <div><label className="font-semibold">Wins & Accomplishments</label><textarea value={review.wins} onChange={e => handleReviewChange('wins', e.target.value)} rows={4} className="w-full p-2 mt-1 text-white bg-gray-900 border-gray-700 rounded-md"/></div>
+                    <div><label className="font-semibold">Challenges & Lessons</label><textarea value={review.challenges} onChange={e => handleReviewChange('challenges', e.target.value)} rows={4} className="w-full p-2 mt-1 text-white bg-gray-900 border-gray-700 rounded-md"/></div>
+                    <div className="relative">
+                        <label className="font-semibold">Top 3-5 Priorities for Next Week</label>
+                        <button onClick={() => setShowQuests(!showQuests)} title="Link from Quests" className="ml-2 p-1 text-cyan-400 hover:bg-cyan-500/20 rounded-full inline-block"><ZapIcon className="w-4 h-4"/></button>
+                        <PriorityList priorities={review.nextWeekPriorities} onAdd={addPriority} onToggle={togglePriority} onDelete={deletePriority} />
+                        {showQuests && (
+                            <div className="absolute z-10 w-full p-2 mt-1 bg-gray-800 border border-gray-700 rounded-md shadow-lg">
+                                <h4 className="text-xs font-bold text-gray-400">Active Quests</h4>
+                                {quests.length > 0 ? quests.map(q => (
+                                    <button key={q.id} onClick={() => addPriorityFromQuest(q.title)} className="block w-full px-2 py-1 mt-1 text-sm text-left text-white rounded-md hover:bg-gray-700">
+                                      <span className="font-semibold capitalize text-cyan-400">[{q.category}]</span> {q.title}
+                                    </button>
+                                )) : <p className="text-xs text-gray-400">No active quests.</p>}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </Card>
+
+            <Card>
+                <h2 className="text-xl font-bold">Ideal Week Calendar</h2>
+                <div className="relative w-full overflow-x-auto mt-4">
+                    <div className="grid grid-cols-8" style={{minWidth: '800px'}}>
+                        <div className="sticky left-0 z-10 bg-gray-800"></div>
+                        {DAYS.map(day => <div key={day} className="py-2 font-bold text-center bg-gray-800 sticky top-0">{day}</div>)}
+                        {HOURS.map((hour, hIndex) => (
+                            <React.Fragment key={hour}>
+                                <div className="sticky left-0 z-10 pr-2 text-xs text-right bg-gray-800 text-gray-400">{hour}</div>
+                                {DAYS.map((_, dIndex) => (
+                                    <div key={`${dIndex}-${hIndex}`} onClick={() => addBlock(dIndex, hIndex)} className="h-12 transition-colors border border-gray-700 bg-gray-900 hover:bg-gray-700"></div>
+                                ))}
+                            </React.Fragment>
+                        ))}
+                    </div>
+                    {/* Render blocks */}
+                    <div className="absolute top-0 left-0 w-full h-full pointer-events-none" style={{minWidth: '800px', paddingTop: '40px', paddingLeft: 'calc(100% / 8)'}}>
+                        {idealBlocks.map(block => (
+                            <div key={block.id} className={`absolute flex items-center justify-center p-1 text-xs text-white rounded-md shadow-lg cursor-pointer pointer-events-auto ${block.color}`}
+                                style={{
+                                    left: `${(block.day / 7) * 100}%`,
+                                    top: `${(block.startTime / 24) * 100}%`,
+                                    width: `${(1 / 7) * 100}%`,
+                                    height: `${((block.endTime - block.startTime) / 24) * 100}%`
+                                }}
+                            >
+                              <input type="text" value={block.title} onChange={e => updateBlock(block.id, {title: e.target.value})} className="w-full h-full text-xs text-center bg-transparent focus:outline-none"/>
+                              <button onClick={() => deleteBlock(block.id)} className="absolute top-0 right-0 p-0.5 bg-black/30 rounded-full opacity-0 hover:opacity-100"><TrashIcon className="w-3 h-3"/></button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+                <div className="mt-4">
+                  <label className="text-sm font-semibold">Google Calendar iCal URL (optional)</label>
+                  <input type="url" value={icalUrl} onChange={e => setIcalUrl(e.target.value)} placeholder="Paste your secret iCal address here to sync events" className="w-full p-2 mt-1 text-white bg-gray-900 border-gray-700 rounded-md"/>
+                  <p className="mt-1 text-xs text-gray-400">Note: iCal sync is for display only and might be slow. This will overlay your real events on the ideal calendar.</p>
+                </div>
+            </Card>
+
+        </div>
+    );
+};
+
+
+const PriorityList: React.FC<{priorities: DailyTask[], onAdd: (text: string) => void, onToggle: (id: string) => void, onDelete: (id: string) => void}> = 
+({priorities, onAdd, onToggle, onDelete}) => {
+  const [newPriority, setNewPriority] = useState('');
+  const handleAdd = (e: React.FormEvent) => {
+    e.preventDefault();
+    onAdd(newPriority);
+    setNewPriority('');
+  }
+  return (
+    <div className="mt-1">
+      <form onSubmit={handleAdd} className="flex items-center space-x-2">
+        <input type="text" value={newPriority} onChange={e => setNewPriority(e.target.value)} placeholder="New priority..." className="w-full p-1 text-sm bg-gray-900 border-gray-700 rounded-md"/>
+        <button type="submit"><PlusCircleIcon className="w-6 h-6 text-cyan-400 hover:text-cyan-300"/></button>
+      </form>
+      <div className="mt-2 space-y-1">
+        {priorities.map(p => (
+          <div key={p.id} className="flex items-center group">
+            <button onClick={() => onToggle(p.id)}><CheckCircleIcon className={`w-5 h-5 mr-2 ${p.completed ? 'text-green-500' : 'text-gray-600'}`}/></button>
+            <span className={`flex-grow text-sm ${p.completed ? 'line-through text-gray-500' : ''}`}>{p.text}</span>
+            <button onClick={() => onDelete(p.id)} className="opacity-0 group-hover:opacity-100"><TrashIcon className="w-4 h-4 text-red-700 hover:text-red-500"/></button>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+
+export default WeeklyPlanPage;
