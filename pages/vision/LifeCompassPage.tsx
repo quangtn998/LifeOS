@@ -5,9 +5,12 @@ import { LifeCompassData, RoleModel, BecomingProfile } from '../../types';
 import Card from '../../components/Card';
 import { SaveIcon, PlusCircleIcon, TrashIcon, EditIcon } from '../../components/icons/Icons';
 import { v4 as uuidv4 } from 'uuid';
+import { useAutoSave } from '../../hooks/useAutoSave';
+import useLocalStorage from '../../hooks/useLocalStorage';
 
 const LifeCompassPage: React.FC = () => {
   const { user } = useAuth();
+  const [draft, setDraft] = useLocalStorage<LifeCompassData | null>(`life-compass-draft-${user?.id}`, null);
   const [data, setData] = useState<LifeCompassData>({
     eulogy: '', bucketList: '', mission: '', success: '',
     roleModels: [], becoming: []
@@ -16,6 +19,7 @@ const LifeCompassPage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('exercises');
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
   const fetchData = useCallback(async () => {
     if (!user) return;
@@ -28,15 +32,20 @@ const LifeCompassPage: React.FC = () => {
         .single();
       
       if (error && error.code !== 'PGRST116') throw error;
-      if (compassData) {
-        setData({
-          eulogy: compassData.eulogy || '',
-          bucketList: compassData.bucket_list || '',
-          mission: compassData.mission || '',
-          success: compassData.success || '',
-          roleModels: compassData.role_models || [],
-          becoming: compassData.becoming || []
-        });
+      const loadedData = compassData ? {
+        eulogy: compassData.eulogy || '',
+        bucketList: compassData.bucket_list || '',
+        mission: compassData.mission || '',
+        success: compassData.success || '',
+        roleModels: compassData.role_models || [],
+        becoming: compassData.becoming || []
+      } : { eulogy: '', bucketList: '', mission: '', success: '', roleModels: [], becoming: [] };
+
+      if (draft && JSON.stringify(draft) !== JSON.stringify(loadedData)) {
+        setData(draft);
+      } else {
+        setData(loadedData);
+        setDraft(null);
       }
     } catch (err: any) { setError(err.message); } 
     finally { setLoading(false); }
@@ -44,7 +53,7 @@ const LifeCompassPage: React.FC = () => {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     if (!user) return;
     setSaving(true);
     setError(null);
@@ -57,14 +66,28 @@ const LifeCompassPage: React.FC = () => {
           bucket_list: data.bucketList,
           mission: data.mission,
           success: data.success,
-          role_models: data.roleModels.map(({ editing, ...rest }) => rest), // Remove editing flag
+          role_models: data.roleModels.map(({ editing, ...rest }) => rest),
           becoming: data.becoming.map(({ editing, ...rest }) => rest),
         }, { onConflict: 'user_id' });
-      
+
       if (error) throw error;
-    } catch (err: any) { setError(err.message); } 
+      setLastSaved(new Date());
+      setDraft(null);
+    } catch (err: any) { setError(err.message); }
     finally { setSaving(false); }
-  };
+  }, [user, data, setDraft]);
+
+  useAutoSave(data, {
+    onSave: handleSave,
+    delay: 3000,
+    enabled: !loading
+  });
+
+  useEffect(() => {
+    if (!loading && user) {
+      setDraft(data);
+    }
+  }, [data, loading, user, setDraft]);
   
   // Generic handler for simple text areas
   const handleChange = (field: keyof LifeCompassData, value: string) => {
@@ -105,14 +128,21 @@ const LifeCompassPage: React.FC = () => {
               <h1 className="text-3xl font-bold text-white">Life Compass</h1>
               <p className="mt-2 text-gray-400 max-w-3xl">Define your 'North Star'. This is your long-term vision that guides all your actions.</p>
             </div>
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="mt-4 md:mt-0 flex items-center justify-center px-4 py-2 font-bold text-white bg-cyan-500 rounded-md hover:bg-cyan-600 disabled:opacity-50 transition-colors"
-            >
-              <SaveIcon className="w-5 h-5 mr-2" />
-              {saving ? 'Saving...' : 'Save Compass'}
-            </button>
+            <div className="mt-4 md:mt-0 flex flex-col items-end gap-2">
+              {lastSaved && (
+                <span className="text-xs text-gray-400">
+                  Auto-saved {lastSaved.toLocaleTimeString()}
+                </span>
+              )}
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="flex items-center justify-center px-4 py-2 font-bold text-white bg-cyan-500 rounded-md hover:bg-cyan-600 disabled:opacity-50 transition-colors"
+              >
+                <SaveIcon className="w-5 h-5 mr-2" />
+                {saving ? 'Saving...' : 'Save Now'}
+              </button>
+            </div>
         </div>
         {error && <p className="text-red-500 bg-red-500/10 p-3 rounded-md">Error: {error}</p>}
 

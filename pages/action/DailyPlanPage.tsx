@@ -5,12 +5,15 @@ import Card from '../../components/Card';
 import { PlusCircleIcon, TrashIcon, CheckCircleIcon, ZapIcon } from '../../components/icons/Icons';
 import { DailyPlan, DailyTask, WeeklyReviewData } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
+import { useAutoSave } from '../../hooks/useAutoSave';
+import useLocalStorage from '../../hooks/useLocalStorage';
 
 const getToday = () => new Date().toISOString().split('T')[0];
 
 const DailyPlanPage: React.FC = () => {
     const { user } = useAuth();
-    const [plan, setPlan] = useState<DailyPlan>({ 
+    const [draft, setDraft] = useLocalStorage<DailyPlan | null>(`daily-plan-draft-${user?.id}-${getToday()}`, null);
+    const [plan, setPlan] = useState<DailyPlan>({
         date: getToday(),
         manifesto: { feeling: '', gratitude: '', adventure: '' },
         tasks: [],
@@ -19,7 +22,8 @@ const DailyPlanPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [newTaskText, setNewTaskText] = useState('');
-    
+    const [lastSaved, setLastSaved] = useState<Date | null>(null);
+
     // For Golden Thread
     const [weeklyPriorities, setWeeklyPriorities] = useState<DailyTask[]>([]);
     const [showPriorities, setShowPriorities] = useState(false);
@@ -37,11 +41,13 @@ const DailyPlanPage: React.FC = () => {
             .eq('date', today)
             .single();
 
-        if (data) {
-            setPlan(data);
-        } else if (error && error.code === 'PGRST116') {
-            // No plan for today, use default empty state
-            setPlan({ date: today, manifesto: { feeling: '', gratitude: '', adventure: '' }, tasks: [], shutdown: { accomplished: '', learned: '', tomorrow: '' } });
+        const loadedData = data || { date: today, manifesto: { feeling: '', gratitude: '', adventure: '' }, tasks: [], shutdown: { accomplished: '', learned: '', tomorrow: '' } };
+
+        if (draft && JSON.stringify(draft) !== JSON.stringify(loadedData)) {
+            setPlan(draft);
+        } else {
+            setPlan(loadedData);
+            setDraft(null);
         }
         
         // Fetch weekly priorities for Golden Thread
@@ -56,23 +62,31 @@ const DailyPlanPage: React.FC = () => {
 
     useEffect(() => { fetchData(); }, [fetchData]);
 
-    const handleSave = async () => {
+    const handleSave = useCallback(async () => {
       if (!user) return;
       setSaving(true);
       const { error } = await supabase
         .from('daily_plan')
         .upsert({ ...plan, user_id: user.id }, { onConflict: 'user_id, date' });
       if (error) console.error("Save error:", error);
+      else {
+        setLastSaved(new Date());
+        setDraft(null);
+      }
       setSaving(false);
-    };
+    }, [user, plan, setDraft]);
 
-    // Auto-save on change
+    useAutoSave(plan, {
+        onSave: handleSave,
+        delay: 2000,
+        enabled: !loading
+    });
+
     useEffect(() => {
-        const handler = setTimeout(() => {
-            if(!loading) handleSave();
-        }, 1500); // Debounce
-        return () => clearTimeout(handler);
-    }, [plan, loading]);
+        if (!loading && user) {
+            setDraft(plan);
+        }
+    }, [plan, loading, user, setDraft]);
 
     const handleManifestoChange = (field: keyof DailyPlan['manifesto'], value: string) => {
         setPlan(p => ({ ...p, manifesto: { ...p.manifesto, [field]: value } }));
@@ -106,7 +120,14 @@ const DailyPlanPage: React.FC = () => {
 
     return (
         <div className="space-y-8">
-            <h1 className="text-3xl font-bold text-white">Daily Plan for {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</h1>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+                <h1 className="text-3xl font-bold text-white">Daily Plan for {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</h1>
+                {lastSaved && (
+                    <span className="text-sm text-gray-400 mt-2 md:mt-0">
+                        Auto-saved {lastSaved.toLocaleTimeString()}
+                    </span>
+                )}
+            </div>
             
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                 <Card className="lg:col-span-1">

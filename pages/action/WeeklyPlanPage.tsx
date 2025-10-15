@@ -5,6 +5,8 @@ import Card from '../../components/Card';
 import { WeeklyReviewData, IdealBlock, DailyTask, Quest } from '../../types';
 import { PlusCircleIcon, SaveIcon, TrashIcon, ZapIcon, CheckCircleIcon } from '../../components/icons/Icons';
 import { v4 as uuidv4 } from 'uuid';
+import { useAutoSave } from '../../hooks/useAutoSave';
+import useLocalStorage from '../../hooks/useLocalStorage';
 
 const getStartOfWeek = (date: Date) => {
     const d = new Date(date);
@@ -21,11 +23,14 @@ const COLORS = ['bg-red-500/70', 'bg-yellow-500/70', 'bg-green-500/70', 'bg-blue
 const WeeklyPlanPage: React.FC = () => {
     const { user } = useAuth();
     const [weekStartDate, setWeekStartDate] = useState(getStartOfWeek(new Date()));
-    const [review, setReview] = useState<WeeklyReviewData>({ week_start_date: weekStartDate.toISOString().split('T')[0], wins: '', challenges: '', nextWeekPriorities: [], quests_status: '', plan_adjustments: ''});
+    const weekKey = weekStartDate.toISOString().split('T')[0];
+    const [draft, setDraft] = useLocalStorage<{review: WeeklyReviewData, blocks: IdealBlock[], ical: string} | null>(`weekly-plan-draft-${user?.id}-${weekKey}`, null);
+    const [review, setReview] = useState<WeeklyReviewData>({ week_start_date: weekKey, wins: '', challenges: '', nextWeekPriorities: [], quests_status: '', plan_adjustments: ''});
     const [idealBlocks, setIdealBlocks] = useState<IdealBlock[]>([]);
     const [icalUrl, setIcalUrl] = useState('');
     const [loading, setLoading] = useState(true);
-    
+    const [lastSaved, setLastSaved] = useState<Date | null>(null);
+
     // For Golden Thread
     const [quests, setQuests] = useState<Quest[]>([]);
     const [showQuests, setShowQuests] = useState(false);
@@ -37,14 +42,22 @@ const WeeklyPlanPage: React.FC = () => {
 
         // Fetch weekly review
         const { data: reviewData } = await supabase.from('weekly_review').select('*').eq('user_id', user.id).eq('week_start_date', startDateStr).single();
-        if (reviewData) setReview(reviewData);
-        else setReview({ week_start_date: startDateStr, wins: '', challenges: '', nextWeekPriorities: [], quests_status: '', plan_adjustments: ''});
+        const loadedReview = reviewData || { week_start_date: startDateStr, wins: '', challenges: '', nextWeekPriorities: [], quests_status: '', plan_adjustments: ''};
 
         // Fetch ideal week
         const { data: weekData } = await supabase.from('ideal_week').select('blocks, ical_url').eq('user_id', user.id).single();
-        if (weekData) {
-            setIdealBlocks(weekData.blocks || []);
-            setIcalUrl(weekData.ical_url || '');
+        const loadedBlocks = weekData?.blocks || [];
+        const loadedIcal = weekData?.ical_url || '';
+
+        if (draft && (JSON.stringify(draft.review) !== JSON.stringify(loadedReview) || JSON.stringify(draft.blocks) !== JSON.stringify(loadedBlocks))) {
+            setReview(draft.review);
+            setIdealBlocks(draft.blocks);
+            setIcalUrl(draft.ical);
+        } else {
+            setReview(loadedReview);
+            setIdealBlocks(loadedBlocks);
+            setIcalUrl(loadedIcal);
+            setDraft(null);
         }
 
         // Fetch quests for Golden Thread
@@ -56,15 +69,32 @@ const WeeklyPlanPage: React.FC = () => {
 
     useEffect(() => { fetchData(); }, [fetchData]);
 
-    const handleSave = async () => {
+    const handleSave = useCallback(async () => {
         if (!user) return;
-        
+
         // Save Review
         await supabase.from('weekly_review').upsert({ ...review, user_id: user.id }, { onConflict: 'user_id, week_start_date' });
-        
+
         // Save Ideal Week
         await supabase.from('ideal_week').upsert({ user_id: user.id, blocks: idealBlocks, ical_url: icalUrl }, { onConflict: 'user_id' });
-    };
+
+        setLastSaved(new Date());
+        setDraft(null);
+    }, [user, review, idealBlocks, icalUrl, setDraft]);
+
+    const currentData = { review, blocks: idealBlocks, ical: icalUrl };
+
+    useAutoSave(currentData, {
+        onSave: handleSave,
+        delay: 3000,
+        enabled: !loading
+    });
+
+    useEffect(() => {
+        if (!loading && user) {
+            setDraft(currentData);
+        }
+    }, [currentData, loading, user, setDraft]);
 
     const handleReviewChange = (field: keyof Omit<WeeklyReviewData, 'nextWeekPriorities'>, value: string) => {
         setReview(r => ({ ...r, [field]: value }));
@@ -111,9 +141,16 @@ const WeeklyPlanPage: React.FC = () => {
                 <h1 className="text-3xl font-bold text-white">Weekly Plan</h1>
                 <p className="mt-2 text-gray-400">Plan for {weekStartDate.toLocaleDateString()} - {new Date(weekStartDate.getTime() + 6 * 24 * 60 * 60 * 1000).toLocaleDateString()}</p>
               </div>
-              <button onClick={handleSave} className="mt-4 md:mt-0 flex items-center justify-center px-4 py-2 font-bold text-white bg-cyan-500 rounded-md hover:bg-cyan-600">
-                  <SaveIcon className="w-5 h-5 mr-2" /> Save Plan
-              </button>
+              <div className="mt-4 md:mt-0 flex flex-col items-end gap-2">
+                {lastSaved && (
+                  <span className="text-xs text-gray-400">
+                    Auto-saved {lastSaved.toLocaleTimeString()}
+                  </span>
+                )}
+                <button onClick={handleSave} className="flex items-center justify-center px-4 py-2 font-bold text-white bg-cyan-500 rounded-md hover:bg-cyan-600">
+                    <SaveIcon className="w-5 h-5 mr-2" /> Save Now
+                </button>
+              </div>
             </div>
             
             <Card>
