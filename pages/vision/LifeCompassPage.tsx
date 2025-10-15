@@ -209,7 +209,7 @@ const BecomingCard: React.FC<{profile: BecomingProfile, onUpdate: Function, onDe
     return (
       <Card className="flex flex-col space-y-3">
         <input type="text" value={who} onChange={e => onUpdate(id, 'who', e.target.value)} placeholder="Who you want to become..." className="w-full p-2 text-xl font-bold text-white bg-gray-900 border-gray-700 rounded-md"/>
-        <input type="text" value={url} onChange={e => onUpdate(id, 'url', e.target.value)} placeholder="Reference URL (optional)" className="w-full p-2 text-sm bg-gray-900 border-gray-700 rounded-md"/>
+        <input type="text" value={url} onChange={e => onUpdate(id, 'url', e.target.value)} placeholder="Image URL" className="w-full p-2 text-sm bg-gray-900 border-gray-700 rounded-md"/>
         <textarea value={traits} onChange={e => onUpdate(id, 'traits', e.target.value)} placeholder="What traits define this person?" rows={3} className="w-full p-2 text-sm bg-gray-900 border-gray-700 rounded-md"/>
         <textarea value={sacrifices} onChange={e => onUpdate(id, 'sacrifices', e.target.value)} placeholder="What are the costs/sacrifices?" rows={3} className="w-full p-2 text-sm bg-gray-900 border-gray-700 rounded-md"/>
         <button onClick={() => onUpdate(id, 'editing', false)} className="w-full py-2 text-sm font-semibold text-white bg-cyan-500 rounded-md hover:bg-cyan-600">Done</button>
@@ -221,13 +221,13 @@ const BecomingCard: React.FC<{profile: BecomingProfile, onUpdate: Function, onDe
        <div className="flex items-start justify-between">
         <div>
           <h3 className="text-xl font-bold text-white">{who}</h3>
-          {url && <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-cyan-400 hover:underline break-all">{url}</a>}
         </div>
         <div className="flex space-x-2">
           <button onClick={() => onUpdate(id, 'editing', true)} className="p-1 text-gray-400 hover:text-white"><EditIcon className="w-4 h-4"/></button>
           <button onClick={() => onDelete(id)} className="p-1 text-gray-400 hover:text-red-500"><TrashIcon className="w-4 h-4"/></button>
         </div>
       </div>
+      {url && <img src={url} alt={who} className="object-cover w-full mt-3 rounded-md h-32"/>}
        <div className="mt-4">
         <h4 className="font-semibold text-green-400">Defining Traits</h4>
         <p className="mt-1 text-sm text-white whitespace-pre-wrap">{traits || "N/A"}</p>
