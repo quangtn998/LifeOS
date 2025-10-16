@@ -49,9 +49,9 @@ const DailyPlanPage: React.FC = () => {
         
         // Fetch weekly priorities for Golden Thread
         const weekStartDate = getStartOfWeek(new Date()).toISOString().split('T')[0];
-        const { data: reviewData } = await supabase.from('weekly_review').select('nextWeekPriorities').eq('user_id', user.id).eq('week_start_date', weekStartDate).maybeSingle();
+        const { data: reviewData } = await supabase.from('weekly_review').select('nextweekpriorities').eq('user_id', user.id).eq('week_start_date', weekStartDate).maybeSingle();
         if(reviewData) {
-            setWeeklyPriorities(reviewData.nextWeekPriorities || []);
+            setWeeklyPriorities(reviewData.nextweekpriorities || []);
         }
 
         setLoading(false);
