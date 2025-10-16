@@ -248,6 +248,7 @@ export const FocusTimerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       setFocusStartTime(Date.now());
       setTotalPauseDuration(0);
       setPauseStartTime(null);
+      setIsActive(true);
     } else if (currentPhase === 'FOCUS') {
       focusEndAudio.current?.play();
 
@@ -261,6 +262,7 @@ export const FocusTimerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
       setCurrentPhase('REFLECT');
       setSecondsLeft(PHASES.REFLECT.duration);
+      setIsActive(true);
     } else if (currentPhase === 'REFLECT') {
       reflectEndAudio.current?.play();
 
@@ -268,6 +270,7 @@ export const FocusTimerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       await saveSessionData(focusStartTime, endTime, totalPauseDuration, actualDurationMinutes);
 
       setShowCompletionDialog(true);
+      setIsActive(false);
     }
   }, [currentPhase, focusStartTime, totalPauseDuration, actualDurationMinutes, logFocusSession, saveSessionData]);
 
