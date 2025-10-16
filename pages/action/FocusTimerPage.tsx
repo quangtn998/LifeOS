@@ -106,20 +106,38 @@ const FocusTimerPage: React.FC = () => {
         }
     }, [user, setSessionGoal]);
 
+    const getWeekRange = () => {
+        const today = new Date();
+        const dayOfWeek = today.getDay();
+        const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+
+        const monday = new Date(today);
+        monday.setDate(today.getDate() + mondayOffset);
+        monday.setHours(0, 0, 0, 0);
+
+        const sunday = new Date(monday);
+        sunday.setDate(monday.getDate() + 6);
+        sunday.setHours(23, 59, 59, 999);
+
+        return {
+            start: monday.toISOString().split('T')[0],
+            end: sunday.toISOString().split('T')[0]
+        };
+    };
+
     const fetchSessionHistory = useCallback(async () => {
         if (!user) return;
         setHistoryLoading(true);
         try {
-            const today = new Date().toISOString().split('T')[0];
+            const weekRange = getWeekRange();
             const { data, error } = await supabase
                 .from('focus_sessions')
                 .select('*')
                 .eq('user_id', user.id)
-                .eq('completed', true)
-                .neq('date', today)
+                .gte('date', weekRange.start)
+                .lte('date', weekRange.end)
                 .order('date', { ascending: false })
-                .order('session_number', { ascending: false })
-                .limit(50);
+                .order('session_number', { ascending: false });
             if (error) throw error;
             setSessionHistory(data || []);
         } catch (err) {
@@ -176,8 +194,8 @@ const FocusTimerPage: React.FC = () => {
                 actualDuration={actualDurationMinutes}
                 plannedDuration={50}
                 sessionStats={sessionStats}
-                onStartNew={() => handleSessionComplete(true)}
-                onDone={() => handleSessionComplete(false)}
+                onStartNew={() => handleSessionComplete(true, fetchSessionHistory)}
+                onDone={() => handleSessionComplete(false, fetchSessionHistory)}
             />
 
             <div className="flex flex-col md:flex-row md:items-center md:justify-between">
@@ -324,11 +342,14 @@ const FocusTimerPage: React.FC = () => {
                  </div>
             )}
 
-            <HistorySection title="Focus Session History" isLoading={historyLoading}>
+            <HistorySection title="This Week's Focus Sessions" isLoading={historyLoading}>
                 {sessionHistory.length === 0 ? (
-                    <p className="text-center text-gray-400 py-8">No previous focus sessions yet. Complete your first session to see history here!</p>
+                    <p className="text-center text-gray-400 py-8">No focus sessions this week yet. Start your first session to build momentum!</p>
                 ) : (
-                    <SessionHistoryGrouped sessions={sessionHistory} />
+                    <div className="space-y-6">
+                        <WeeklyStats sessions={sessionHistory} />
+                        <SessionHistoryGrouped sessions={sessionHistory} />
+                    </div>
                 )}
             </HistorySection>
         </div>
@@ -406,6 +427,36 @@ const RechargeList: React.FC<{defaultActivities: CustomTool[], customActivities:
                 <input value={newActivityText} onChange={e => setNewActivityText(e.target.value)} type="text" placeholder="Add your own recharge activity..." className="flex-grow w-full p-1 text-xs text-white bg-gray-900 border-gray-700 rounded-md"/>
                 <button type="submit" className="p-1 text-white bg-cyan-800 rounded-full hover:bg-cyan-700"><PlusCircleIcon className="w-5 h-5"/></button>
             </form>
+        </div>
+    );
+};
+
+const WeeklyStats: React.FC<{sessions: FocusSessionHistory[]}> = ({ sessions }) => {
+    const completedSessions = sessions.filter(s => s.completed);
+    const incompleteSessions = sessions.filter(s => !s.completed);
+    const totalMinutes = completedSessions.reduce((sum, s) => sum + (s.actual_duration_minutes || s.duration_minutes || 0), 0);
+    const totalHours = Math.floor(totalMinutes / 60);
+    const remainingMinutes = totalMinutes % 60;
+    const completionRate = sessions.length > 0 ? Math.round((completedSessions.length / sessions.length) * 100) : 0;
+
+    return (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+                <p className="text-xs text-gray-400 mb-1">Total Sessions</p>
+                <p className="text-2xl font-bold text-white">{sessions.length}</p>
+            </div>
+            <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+                <p className="text-xs text-gray-400 mb-1">Completed</p>
+                <p className="text-2xl font-bold text-green-400">{completedSessions.length}</p>
+            </div>
+            <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+                <p className="text-xs text-gray-400 mb-1">Focus Time</p>
+                <p className="text-2xl font-bold text-cyan-400">{totalHours}h {remainingMinutes}m</p>
+            </div>
+            <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+                <p className="text-xs text-gray-400 mb-1">Completion Rate</p>
+                <p className="text-2xl font-bold text-yellow-400">{completionRate}%</p>
+            </div>
         </div>
     );
 };

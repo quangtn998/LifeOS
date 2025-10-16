@@ -277,7 +277,10 @@ export const FocusTimerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
   };
 
-  const handleSessionComplete = useCallback(async (startNew: boolean) => {
+  const handleSessionComplete = useCallback(async (startNew: boolean, onHistoryRefresh?: () => void) => {
+    if (onHistoryRefresh) {
+      onHistoryRefresh();
+    }
     if (startNew) {
       await resetTimer();
       setIsActive(true);
