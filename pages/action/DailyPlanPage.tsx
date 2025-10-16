@@ -86,12 +86,22 @@ const DailyPlanPage: React.FC = () => {
     const handleSave = useCallback(async () => {
       if (!user) return;
       setSaving(true);
-      const { error } = await supabase
-        .from('daily_plan')
-        .upsert({ ...plan, user_id: user.id }, { onConflict: 'user_id, date' });
-      if (error) console.error("Save error:", error);
-      else setLastSaved(new Date());
-      setSaving(false);
+      try {
+        const { error } = await supabase
+          .from('daily_plan')
+          .upsert({ ...plan, user_id: user.id }, { onConflict: 'user_id, date' });
+
+        if (error) {
+          console.error("Save error:", error);
+          throw error;
+        }
+
+        setLastSaved(new Date());
+      } catch (error) {
+        console.error("Save failed:", error);
+      } finally {
+        setSaving(false);
+      }
     }, [user, plan]);
 
     useAutoSave(plan, {
