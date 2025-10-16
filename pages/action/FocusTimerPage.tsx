@@ -115,7 +115,6 @@ const FocusTimerPage: React.FC = () => {
                 .select('*')
                 .eq('user_id', user.id)
                 .eq('completed', true)
-                .neq('date', new Date().toISOString().split('T')[0])
                 .order('date', { ascending: false })
                 .order('session_number', { ascending: false })
                 .limit(50);
