@@ -7,6 +7,8 @@ import HistorySection from '../../components/HistorySection';
 import { PlayIcon, PauseIcon, RefreshCwIcon, PlusCircleIcon, TrashIcon, SkipForwardIcon } from '../../components/icons/Icons';
 import { CustomTool, DailyPlan } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
+import ExpandableGuide from '../../components/ExpandableGuide';
+import { GUIDE_CONTENT } from '../../constants/guideContent';
 
 interface FocusSessionHistory {
   id: string;
@@ -179,7 +181,9 @@ const FocusTimerPage: React.FC = () => {
                 <div className="space-y-6">
                     <Card>
                         <h3 className="text-xl font-bold text-white mb-4">Plan & Organize (5 minutes)</h3>
-                        <p className="text-sm text-gray-300 mb-4">Before diving into work, take 5 minutes to prepare yourself.</p>
+                        <div className="mb-4">
+                          <ExpandableGuide title="About the Focus Hour Formula" content={GUIDE_CONTENT.focusHourFormula} />
+                        </div>
 
                         <div className="space-y-4">
                             <div className="p-4 bg-gray-900 rounded-lg">
@@ -216,13 +220,17 @@ const FocusTimerPage: React.FC = () => {
                     <Card>
                       <h3 className="font-bold text-white">Session Goal</h3>
                       <p className="p-3 mt-2 text-cyan-400 rounded-md bg-gray-900">{sessionGoal || "No goal set."}</p>
-                      
+
                       <h3 className="mt-4 font-bold text-white">Capture System</h3>
                       <p className="text-sm text-gray-400">Jot down distracting thoughts here.</p>
                       <textarea value={capturedThoughts} onChange={e => setCapturedThoughts(e.target.value)} rows={4} className="w-full p-2 mt-2 text-white bg-gray-900 border-gray-700 rounded-md"/>
                     </Card>
                     <Card>
                         <h3 className="font-bold text-white">Focus Toolkit</h3>
+                        <div className="mt-2 space-y-2">
+                          <ExpandableGuide title="About the Focus Toolkit" content={GUIDE_CONTENT.focusToolkit} />
+                          <ExpandableGuide title="About Focus Disruptors" content={GUIDE_CONTENT.focusDisruptors} />
+                        </div>
                         <div className="mt-2">
                           <h4 className="font-semibold text-yellow-400">Activation Menu (to start)</h4>
                           <ToolList type="activation" defaultTools={DEFAULT_TOOLS.activation} customTools={customTools.activation} onToolClick={trackToolUsage} onAddTool={addCustomTool} onDeleteTool={deleteCustomTool} toolkitUsage={sessionStats.toolkit} />
@@ -250,7 +258,9 @@ const FocusTimerPage: React.FC = () => {
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                         <Card>
                             <h3 className="text-xl font-bold text-white mb-4">Reflect & Recharge (5 minutes)</h3>
-                            <p className="text-sm text-gray-300 mb-4">After 50 minutes, take a break.</p>
+                            <div className="mb-4">
+                              <ExpandableGuide title="About the Recharge Menu" content={GUIDE_CONTENT.rechargeMenu} />
+                            </div>
 
                             <div className="space-y-4">
                                 <div className="p-4 bg-gray-900 rounded-lg">

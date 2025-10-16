@@ -5,6 +5,8 @@ import { Quest } from '../../types';
 import Card from '../../components/Card';
 import HistorySection from '../../components/HistorySection';
 import { PlusCircleIcon, TrashIcon, CheckCircleIcon, EditIcon, SaveIcon } from '../../components/icons/Icons';
+import ExpandableGuide from '../../components/ExpandableGuide';
+import { GUIDE_CONTENT } from '../../constants/guideContent';
 
 const QuarterlyQuestsPage: React.FC = () => {
   const { user } = useAuth();
@@ -150,7 +152,9 @@ const QuarterlyQuestsPage: React.FC = () => {
     <div className="space-y-8">
       <h1 className="text-3xl font-bold text-white">Quarterly Quests</h1>
       <p className="text-gray-400 max-w-3xl">This is the bridge between Vision and Action. Define one Main Quest and several Side Quests for Work and Life.</p>
-      
+
+      <ExpandableGuide title="How to choose great quests" content={GUIDE_CONTENT.quarterlyQuests} />
+
       {error && <p className="text-red-500 bg-red-500/10 p-3 rounded-md">Error: {error}</p>}
       
       <Card>

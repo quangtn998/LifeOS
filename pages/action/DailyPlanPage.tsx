@@ -8,6 +8,8 @@ import { DailyPlan, DailyTask, WeeklyReviewData } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
 import { useAutoSave } from '../../hooks/useAutoSave';
 import useLocalStorage from '../../hooks/useLocalStorage';
+import ExpandableGuide from '../../components/ExpandableGuide';
+import { GUIDE_CONTENT } from '../../constants/guideContent';
 
 const getToday = () => new Date().toISOString().split('T')[0];
 
@@ -159,6 +161,9 @@ const DailyPlanPage: React.FC = () => {
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                 <Card className="lg:col-span-1">
                     <h2 className="text-xl font-bold text-white">Morning Manifesto</h2>
+                    <div className="mt-3">
+                      <ExpandableGuide title="About the Morning Manifesto" content={GUIDE_CONTENT.morningManifesto} />
+                    </div>
                     <div className="mt-4 space-y-3">
                         <div><label className="text-sm font-medium text-gray-400">How am I feeling?</label><input type="text" value={plan.manifesto.feeling} onChange={e => handleManifestoChange('feeling', e.target.value)} className="w-full p-2 mt-1 text-white bg-gray-900 border-gray-700 rounded-md"/></div>
                         <div><label className="text-sm font-medium text-gray-400">What am I grateful for?</label><input type="text" value={plan.manifesto.gratitude} onChange={e => handleManifestoChange('gratitude', e.target.value)} className="w-full p-2 mt-1 text-white bg-gray-900 border-gray-700 rounded-md"/></div>
@@ -200,6 +205,9 @@ const DailyPlanPage: React.FC = () => {
                 
                 <Card className="lg:col-span-3">
                     <h2 className="text-xl font-bold text-white">Evening Shutdown</h2>
+                    <div className="mt-3">
+                      <ExpandableGuide title="About the Evening Shutdown" content={GUIDE_CONTENT.eveningShutdown} />
+                    </div>
                     <div className="grid grid-cols-1 gap-4 mt-4 md:grid-cols-3">
                         <div><label className="text-sm font-medium text-gray-400">What did I accomplish?</label><textarea value={plan.shutdown.accomplished} onChange={e => handleShutdownChange('accomplished', e.target.value)} rows={4} className="w-full p-2 mt-1 text-white bg-gray-900 border-gray-700 rounded-md"/></div>
                         <div><label className="text-sm font-medium text-gray-400">What did I learn?</label><textarea value={plan.shutdown.learned} onChange={e => handleShutdownChange('learned', e.target.value)} rows={4} className="w-full p-2 mt-1 text-white bg-gray-900 border-gray-700 rounded-md"/></div>

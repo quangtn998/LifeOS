@@ -8,6 +8,8 @@ import { PlusCircleIcon, SaveIcon, TrashIcon, ZapIcon, CheckCircleIcon } from '.
 import { v4 as uuidv4 } from 'uuid';
 import { useAutoSave } from '../../hooks/useAutoSave';
 import useLocalStorage from '../../hooks/useLocalStorage';
+import ExpandableGuide from '../../components/ExpandableGuide';
+import { GUIDE_CONTENT } from '../../constants/guideContent';
 
 const getStartOfWeek = (date: Date) => {
     const d = new Date(date);
@@ -265,6 +267,9 @@ const WeeklyPlanPage: React.FC = () => {
             
             <Card>
                 <h2 className="text-xl font-bold">Weekly Review</h2>
+                <div className="mt-3">
+                  <ExpandableGuide title="About the Weekly Review" content={GUIDE_CONTENT.weeklyReview} />
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
                     <div><label className="font-semibold">Wins & Accomplishments</label><textarea value={review.wins} onChange={e => handleReviewChange('wins', e.target.value)} rows={4} className="w-full p-2 mt-1 text-white bg-gray-900 border-gray-700 rounded-md"/></div>
                     <div><label className="font-semibold">Challenges & Lessons</label><textarea value={review.challenges} onChange={e => handleReviewChange('challenges', e.target.value)} rows={4} className="w-full p-2 mt-1 text-white bg-gray-900 border-gray-700 rounded-md"/></div>
@@ -288,6 +293,9 @@ const WeeklyPlanPage: React.FC = () => {
 
             <Card>
                 <h2 className="text-xl font-bold">Ideal Week Calendar</h2>
+                <div className="mt-3">
+                  <ExpandableGuide title="About the Ideal Week Calendar" content={GUIDE_CONTENT.idealWeekCalendar} />
+                </div>
                 <div className="relative w-full overflow-x-auto mt-4">
                     <div className="grid grid-cols-8" style={{minWidth: '800px'}}>
                         <div className="sticky left-0 z-10 bg-gray-800"></div>

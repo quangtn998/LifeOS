@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { Quest, FocusLogData } from '../types';
 import { ZapIcon, ClockIcon } from '../components/icons/Icons';
+import FocusHeatmap from '../components/FocusHeatmap';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
@@ -97,6 +98,15 @@ const Dashboard: React.FC = () => {
                            <span className="mt-1 text-xs text-gray-400">{new Date(item.date).getDate()}</span>
                         </div>
                     ))}
+                </div>
+            </Card>
+            <Card>
+                <h2 className="flex items-center text-xl font-bold text-white">
+                  <ClockIcon className="w-5 h-5 mr-2 text-green-400"/> Annual Focus Activity
+                </h2>
+                <p className="mt-2 text-gray-400">Your deep work consistency over the past year. Each cell represents a day.</p>
+                <div className="mt-4">
+                  <FocusHeatmap />
                 </div>
             </Card>
         </div>

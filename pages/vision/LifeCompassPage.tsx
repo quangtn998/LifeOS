@@ -7,6 +7,8 @@ import { SaveIcon, PlusCircleIcon, TrashIcon, EditIcon } from '../../components/
 import { v4 as uuidv4 } from 'uuid';
 import { useAutoSave } from '../../hooks/useAutoSave';
 import useLocalStorage from '../../hooks/useLocalStorage';
+import ExpandableGuide from '../../components/ExpandableGuide';
+import { GUIDE_CONTENT } from '../../constants/guideContent';
 
 const LifeCompassPage: React.FC = () => {
   const { user } = useAuth();
@@ -149,10 +151,34 @@ const LifeCompassPage: React.FC = () => {
         <div className="space-y-6">
             <h2 className="text-2xl font-bold text-white">Core Exercises</h2>
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                <Card><h2 className="font-bold">The Eulogy Method</h2><p className="text-sm text-gray-400 mt-1">What do you want people to say about you at the end of your life?</p><textarea value={data.eulogy} onChange={e => handleChange('eulogy', e.target.value)} rows={8} className="w-full p-2 mt-2 text-white bg-gray-900 border-gray-700 rounded-md"/></Card>
-                <Card><h2 className="font-bold">The Bucket List</h2><p className="text-sm text-gray-400 mt-1">What experiences do you want to have?</p><textarea value={data.bucketList} onChange={e => handleChange('bucketList', e.target.value)} rows={8} className="w-full p-2 mt-2 text-white bg-gray-900 border-gray-700 rounded-md"/></Card>
-                <Card><h2 className="font-bold">The Mission Prompt</h2><p className="text-sm text-gray-400 mt-1">What is your purpose? What problem do you want to solve?</p><textarea value={data.mission} onChange={e => handleChange('mission', e.target.value)} rows={8} className="w-full p-2 mt-2 text-white bg-gray-900 border-gray-700 rounded-md"/></Card>
-                <Card><h2 className="font-bold">The Success Prompt</h2><p className="text-sm text-gray-400 mt-1">What does success look like to you?</p><textarea value={data.success} onChange={e => handleChange('success', e.target.value)} rows={8} className="w-full p-2 mt-2 text-white bg-gray-900 border-gray-700 rounded-md"/></Card>
+                <Card>
+                  <h2 className="font-bold">The Eulogy Method</h2>
+                  <div className="mt-2">
+                    <ExpandableGuide title="How to approach this exercise" content={GUIDE_CONTENT.eulogyMethod} />
+                  </div>
+                  <textarea value={data.eulogy} onChange={e => handleChange('eulogy', e.target.value)} rows={8} className="w-full p-2 mt-3 text-white bg-gray-900 border-gray-700 rounded-md"/>
+                </Card>
+                <Card>
+                  <h2 className="font-bold">The Bucket List</h2>
+                  <div className="mt-2">
+                    <ExpandableGuide title="How to approach this exercise" content={GUIDE_CONTENT.bucketList} />
+                  </div>
+                  <textarea value={data.bucketList} onChange={e => handleChange('bucketList', e.target.value)} rows={8} className="w-full p-2 mt-3 text-white bg-gray-900 border-gray-700 rounded-md"/>
+                </Card>
+                <Card>
+                  <h2 className="font-bold">The Mission Prompt</h2>
+                  <div className="mt-2">
+                    <ExpandableGuide title="How to approach this exercise" content={GUIDE_CONTENT.missionPrompt} />
+                  </div>
+                  <textarea value={data.mission} onChange={e => handleChange('mission', e.target.value)} rows={8} className="w-full p-2 mt-3 text-white bg-gray-900 border-gray-700 rounded-md"/>
+                </Card>
+                <Card>
+                  <h2 className="font-bold">The Success Prompt</h2>
+                  <div className="mt-2">
+                    <ExpandableGuide title="How to approach this exercise" content={GUIDE_CONTENT.successPrompt} />
+                  </div>
+                  <textarea value={data.success} onChange={e => handleChange('success', e.target.value)} rows={8} className="w-full p-2 mt-3 text-white bg-gray-900 border-gray-700 rounded-md"/>
+                </Card>
             </div>
         </div>
 
