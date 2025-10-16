@@ -40,12 +40,17 @@ const WeeklyPlanPage: React.FC = () => {
 
         // Fetch weekly review
         const { data: reviewData } = await supabase.from('weekly_review').select('*').eq('user_id', user.id).eq('week_start_date', startDateStr).maybeSingle();
-        const loadedReview = reviewData || { week_start_date: startDateStr, wins: '', challenges: '', nextWeekPriorities: [], quests_status: '', plan_adjustments: ''};
+        const loadedReview = reviewData
+            ? {
+                ...reviewData,
+                nextWeekPriorities: reviewData.nextweekpriorities || []
+              }
+            : { week_start_date: startDateStr, wins: '', challenges: '', nextWeekPriorities: [], quests_status: '', plan_adjustments: ''};
         setReview(loadedReview);
 
         // Fetch Google Calendar URL
-        const { data: calendarData } = await supabase.from('ideal_week').select('google_calendar_url').eq('user_id', user.id).maybeSingle();
-        const loadedCalendarUrl = calendarData?.google_calendar_url || '';
+        const { data: calendarData } = await supabase.from('ideal_week').select('ical_url').eq('user_id', user.id).maybeSingle();
+        const loadedCalendarUrl = calendarData?.ical_url || '';
         setGoogleCalendarUrl(loadedCalendarUrl);
 
         // Fetch quests for Golden Thread
@@ -68,7 +73,11 @@ const WeeklyPlanPage: React.FC = () => {
                 .order('week_start_date', { ascending: false })
                 .limit(12);
             if (error) throw error;
-            setWeeklyHistory(data || []);
+            const mappedHistory = (data || []).map(item => ({
+                ...item,
+                nextWeekPriorities: item.nextweekpriorities || []
+            }));
+            setWeeklyHistory(mappedHistory);
         } catch (err) {
             console.error('Error fetching weekly history:', err);
         } finally {
@@ -87,9 +96,18 @@ const WeeklyPlanPage: React.FC = () => {
 
         try {
             // Save Review
+            const reviewToSave = {
+                user_id: user.id,
+                week_start_date: review.week_start_date,
+                wins: review.wins,
+                challenges: review.challenges,
+                nextweekpriorities: review.nextWeekPriorities,
+                quests_status: review.quests_status,
+                plan_adjustments: review.plan_adjustments
+            };
             const { error: reviewError } = await supabase
                 .from('weekly_review')
-                .upsert({ ...review, user_id: user.id }, { onConflict: 'user_id, week_start_date' });
+                .upsert(reviewToSave, { onConflict: 'user_id, week_start_date' });
 
             if (reviewError) {
                 console.error('Error saving weekly review:', reviewError);
@@ -99,7 +117,7 @@ const WeeklyPlanPage: React.FC = () => {
             // Save Google Calendar URL
             const { error: calendarError } = await supabase
                 .from('ideal_week')
-                .upsert({ user_id: user.id, google_calendar_url: googleCalendarUrl }, { onConflict: 'user_id' });
+                .upsert({ user_id: user.id, ical_url: googleCalendarUrl }, { onConflict: 'user_id' });
 
             if (calendarError) {
                 console.error('Error saving calendar URL:', calendarError);
