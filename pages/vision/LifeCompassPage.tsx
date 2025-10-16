@@ -222,7 +222,7 @@ const LifeCompassPage: React.FC = () => {
         {/* Important Things to Remember */}
         <div className="space-y-6">
             <h2 className="text-2xl font-bold text-white">Important Things to Remember ({data.importantThings.length})</h2>
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
                 {data.importantThings.map(it => <ImportantThingCard key={it.id} item={it} onUpdate={updateImportantThing} onDelete={deleteImportantThing} />)}
                 <button onClick={addImportantThing} className="flex flex-col items-center justify-center min-h-[200px] p-6 border-2 border-dashed border-gray-700 rounded-lg hover:bg-gray-800 transition-colors">
                   <PlusCircleIcon className="w-10 h-10 text-gray-500" />
@@ -234,7 +234,7 @@ const LifeCompassPage: React.FC = () => {
         {/* Principles */}
         <div className="space-y-6">
             <h2 className="text-2xl font-bold text-white">Principles ({data.principles.length})</h2>
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
                 {data.principles.map(pr => <PrincipleCard key={pr.id} item={pr} onUpdate={updatePrinciple} onDelete={deletePrinciple} />)}
                 <button onClick={addPrinciple} className="flex flex-col items-center justify-center min-h-[200px] p-6 border-2 border-dashed border-gray-700 rounded-lg hover:bg-gray-800 transition-colors">
                   <PlusCircleIcon className="w-10 h-10 text-gray-500" />
