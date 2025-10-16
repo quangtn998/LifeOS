@@ -33,8 +33,8 @@ const Dashboard: React.FC = () => {
         .from('focus_log')
         .select('data')
         .eq('user_id', user.id)
-        .single();
-      
+        .maybeSingle();
+
       setFocusLog(focusLogData?.data || {});
 
       setLoading(false);

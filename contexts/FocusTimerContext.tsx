@@ -248,36 +248,16 @@ export const FocusTimerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const skipToNextPhase = useCallback(async () => {
     setIsActive(false);
-    if (currentPhase === 'PLAN') {
-      planEndAudio.current?.play();
-      setCurrentPhase('FOCUS');
-      setSecondsLeft(PHASES.FOCUS.duration);
-      setFocusStartTime(Date.now());
-      setTotalPauseDuration(0);
-      setPauseStartTime(null);
-    } else if (currentPhase === 'FOCUS') {
-      focusEndAudio.current?.play();
-
+    if (currentPhase === 'FOCUS' && focusStartTime) {
       const endTime = Date.now();
-      const totalElapsed = focusStartTime ? (endTime - focusStartTime) / 1000 : 0;
+      const totalElapsed = (endTime - focusStartTime) / 1000;
       const timeSpentInPhase = PHASES.FOCUS.duration - secondsLeft;
       const actualFocusTime = Math.max(0, Math.min(totalElapsed, timeSpentInPhase) - totalPauseDuration);
       const actualMinutes = Math.round(actualFocusTime / 60);
-
       setActualDurationMinutes(actualMinutes);
-      await logFocusSession(actualMinutes);
-
-      setCurrentPhase('REFLECT');
-      setSecondsLeft(PHASES.REFLECT.duration);
-    } else if (currentPhase === 'REFLECT') {
-      reflectEndAudio.current?.play();
-
-      const endTime = Date.now();
-      await saveSessionData(focusStartTime, endTime, totalPauseDuration, actualDurationMinutes);
-
-      setShowCompletionDialog(true);
     }
-  }, [currentPhase, focusStartTime, secondsLeft, totalPauseDuration, actualDurationMinutes, logFocusSession, saveSessionData]);
+    setSecondsLeft(-1);
+  }, [currentPhase, focusStartTime, secondsLeft, totalPauseDuration]);
 
   const trackDisruptor = useCallback(async (disruptor: keyof FocusSessionStats['disruptors']) => {
     setSessionStats(s => ({ ...s, disruptors: {...s.disruptors, [disruptor]: s.disruptors[disruptor] + 1 }}));
