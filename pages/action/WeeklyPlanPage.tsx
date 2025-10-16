@@ -7,7 +7,6 @@ import { WeeklyReviewData, IdealBlock, DailyTask, Quest, CalendarEvent } from '.
 import { PlusCircleIcon, SaveIcon, TrashIcon, ZapIcon, CheckCircleIcon } from '../../components/icons/Icons';
 import { v4 as uuidv4 } from 'uuid';
 import { useAutoSave } from '../../hooks/useAutoSave';
-import useLocalStorage from '../../hooks/useLocalStorage';
 import ExpandableGuide from '../../components/ExpandableGuide';
 import { GUIDE_CONTENT } from '../../constants/guideContent';
 
@@ -27,7 +26,6 @@ const WeeklyPlanPage: React.FC = () => {
     const { user } = useAuth();
     const [weekStartDate, setWeekStartDate] = useState(getStartOfWeek(new Date()));
     const weekKey = weekStartDate.toISOString().split('T')[0];
-    const [draft, setDraft] = useLocalStorage<{review: WeeklyReviewData, blocks: IdealBlock[], ical: string} | null>(`weekly-plan-draft-${user?.id}-${weekKey}`, null);
     const [review, setReview] = useState<WeeklyReviewData>({ week_start_date: weekKey, wins: '', challenges: '', nextWeekPriorities: [], quests_status: '', plan_adjustments: ''});
     const [idealBlocks, setIdealBlocks] = useState<IdealBlock[]>([]);
     const [icalUrl, setIcalUrl] = useState('');
@@ -50,22 +48,14 @@ const WeeklyPlanPage: React.FC = () => {
         // Fetch weekly review
         const { data: reviewData } = await supabase.from('weekly_review').select('*').eq('user_id', user.id).eq('week_start_date', startDateStr).maybeSingle();
         const loadedReview = reviewData || { week_start_date: startDateStr, wins: '', challenges: '', nextWeekPriorities: [], quests_status: '', plan_adjustments: ''};
+        setReview(loadedReview);
 
         // Fetch ideal week
         const { data: weekData } = await supabase.from('ideal_week').select('blocks, ical_url').eq('user_id', user.id).maybeSingle();
         const loadedBlocks = weekData?.blocks || [];
         const loadedIcal = weekData?.ical_url || '';
-
-        if (draft && (JSON.stringify(draft.review) !== JSON.stringify(loadedReview) || JSON.stringify(draft.blocks) !== JSON.stringify(loadedBlocks))) {
-            setReview(draft.review);
-            setIdealBlocks(draft.blocks);
-            setIcalUrl(draft.ical);
-        } else {
-            setReview(loadedReview);
-            setIdealBlocks(loadedBlocks);
-            setIcalUrl(loadedIcal);
-            setDraft(null);
-        }
+        setIdealBlocks(loadedBlocks);
+        setIcalUrl(loadedIcal);
 
         // Fetch quests for Golden Thread
         const { data: questsData } = await supabase.from('quests').select('*').eq('user_id', user.id).eq('completed', false);
@@ -151,8 +141,7 @@ const WeeklyPlanPage: React.FC = () => {
         await supabase.from('ideal_week').upsert({ user_id: user.id, blocks: idealBlocks, ical_url: icalUrl }, { onConflict: 'user_id' });
 
         setLastSaved(new Date());
-        setDraft(null);
-    }, [user, review, idealBlocks, icalUrl, setDraft]);
+    }, [user, review, idealBlocks, icalUrl]);
 
     const currentData = React.useMemo(() => ({
         review,
@@ -162,15 +151,9 @@ const WeeklyPlanPage: React.FC = () => {
 
     useAutoSave(currentData, {
         onSave: handleSave,
-        delay: 3000,
+        delay: 1000,
         enabled: !loading
     });
-
-    useEffect(() => {
-        if (!loading && user) {
-            setDraft(currentData);
-        }
-    }, [review, idealBlocks, icalUrl, loading, user, setDraft]);
 
     const handleReviewChange = (field: keyof Omit<WeeklyReviewData, 'nextWeekPriorities'>, value: string) => {
         setReview(r => ({ ...r, [field]: value }));

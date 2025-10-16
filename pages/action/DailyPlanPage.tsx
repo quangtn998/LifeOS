@@ -7,7 +7,6 @@ import { PlusCircleIcon, TrashIcon, CheckCircleIcon, ZapIcon } from '../../compo
 import { DailyPlan, DailyTask, WeeklyReviewData } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
 import { useAutoSave } from '../../hooks/useAutoSave';
-import useLocalStorage from '../../hooks/useLocalStorage';
 import ExpandableGuide from '../../components/ExpandableGuide';
 import { GUIDE_CONTENT } from '../../constants/guideContent';
 
@@ -15,7 +14,6 @@ const getToday = () => new Date().toISOString().split('T')[0];
 
 const DailyPlanPage: React.FC = () => {
     const { user } = useAuth();
-    const [draft, setDraft] = useLocalStorage<DailyPlan | null>(`daily-plan-draft-${user?.id}-${getToday()}`, null);
     const [plan, setPlan] = useState<DailyPlan>({
         date: getToday(),
         manifesto: { feeling: '', gratitude: '', adventure: '' },
@@ -47,13 +45,7 @@ const DailyPlanPage: React.FC = () => {
             .maybeSingle();
 
         const loadedData = data || { date: today, manifesto: { feeling: '', gratitude: '', adventure: '' }, tasks: [], shutdown: { accomplished: '', learned: '', tomorrow: '' } };
-
-        if (draft && JSON.stringify(draft) !== JSON.stringify(loadedData)) {
-            setPlan(draft);
-        } else {
-            setPlan(loadedData);
-            setDraft(null);
-        }
+        setPlan(loadedData);
         
         // Fetch weekly priorities for Golden Thread
         const weekStartDate = getStartOfWeek(new Date()).toISOString().split('T')[0];
@@ -98,24 +90,15 @@ const DailyPlanPage: React.FC = () => {
         .from('daily_plan')
         .upsert({ ...plan, user_id: user.id }, { onConflict: 'user_id, date' });
       if (error) console.error("Save error:", error);
-      else {
-        setLastSaved(new Date());
-        setDraft(null);
-      }
+      else setLastSaved(new Date());
       setSaving(false);
-    }, [user, plan, setDraft]);
+    }, [user, plan]);
 
     useAutoSave(plan, {
         onSave: handleSave,
-        delay: 2000,
+        delay: 1000,
         enabled: !loading
     });
-
-    useEffect(() => {
-        if (!loading && user) {
-            setDraft(plan);
-        }
-    }, [plan, loading, user, setDraft]);
 
     const handleManifestoChange = (field: keyof DailyPlan['manifesto'], value: string) => {
         setPlan(p => ({ ...p, manifesto: { ...p.manifesto, [field]: value } }));

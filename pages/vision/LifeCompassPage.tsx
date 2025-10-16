@@ -6,13 +6,11 @@ import Card from '../../components/Card';
 import { SaveIcon, PlusCircleIcon, TrashIcon, EditIcon } from '../../components/icons/Icons';
 import { v4 as uuidv4 } from 'uuid';
 import { useAutoSave } from '../../hooks/useAutoSave';
-import useLocalStorage from '../../hooks/useLocalStorage';
 import ExpandableGuide from '../../components/ExpandableGuide';
 import { GUIDE_CONTENT } from '../../constants/guideContent';
 
 const LifeCompassPage: React.FC = () => {
   const { user } = useAuth();
-  const [draft, setDraft] = useLocalStorage<LifeCompassData | null>(`life-compass-draft-${user?.id}`, null);
   const [data, setData] = useState<LifeCompassData>({
     eulogy: '', bucketList: '', mission: '', success: '',
     roleModels: [], becoming: []
@@ -41,13 +39,7 @@ const LifeCompassPage: React.FC = () => {
         roleModels: compassData.role_models || [],
         becoming: compassData.becoming || []
       } : { eulogy: '', bucketList: '', mission: '', success: '', roleModels: [], becoming: [] };
-
-      if (draft && JSON.stringify(draft) !== JSON.stringify(loadedData)) {
-        setData(draft);
-      } else {
-        setData(loadedData);
-        setDraft(null);
-      }
+      setData(loadedData);
     } catch (err: any) { setError(err.message); } 
     finally { setLoading(false); }
   }, [user]);
@@ -73,22 +65,15 @@ const LifeCompassPage: React.FC = () => {
 
       if (error) throw error;
       setLastSaved(new Date());
-      setDraft(null);
     } catch (err: any) { setError(err.message); }
     finally { setSaving(false); }
-  }, [user, data, setDraft]);
+  }, [user, data]);
 
   useAutoSave(data, {
     onSave: handleSave,
-    delay: 3000,
+    delay: 1000,
     enabled: !loading
   });
-
-  useEffect(() => {
-    if (!loading && user) {
-      setDraft(data);
-    }
-  }, [data, loading, user, setDraft]);
   
   // Generic handler for simple text areas
   const handleChange = (field: keyof LifeCompassData, value: string) => {
