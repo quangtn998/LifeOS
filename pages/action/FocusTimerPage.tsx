@@ -5,6 +5,7 @@ import { useFocusTimer } from '../../contexts/FocusTimerContext';
 import Card from '../../components/Card';
 import HistorySection from '../../components/HistorySection';
 import SessionCompletionDialog from '../../components/SessionCompletionDialog';
+import SessionHistoryGrouped from '../../components/SessionHistoryGrouped';
 import { PlayIcon, PauseIcon, RefreshCwIcon, PlusCircleIcon, TrashIcon, SkipForwardIcon } from '../../components/icons/Icons';
 import { CustomTool, DailyPlan } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
@@ -315,88 +316,7 @@ const FocusTimerPage: React.FC = () => {
                 {sessionHistory.length === 0 ? (
                     <p className="text-center text-gray-400 py-8">No previous focus sessions yet. Complete your first session to see history here!</p>
                 ) : (
-                    <div className="space-y-4">
-                        {sessionHistory.map(session => (
-                            <Card key={session.id} className="bg-gray-800/30">
-                                <div className="flex justify-between items-start mb-2">
-                                    <div>
-                                        <div className="flex items-center gap-2">
-                                            <h3 className="text-lg font-semibold text-cyan-400">{session.goal || 'No goal set'}</h3>
-                                            <span className="text-xs text-gray-500 bg-gray-700 px-2 py-1 rounded">
-                                                Session #{session.session_number}
-                                            </span>
-                                        </div>
-                                        <p className="text-sm text-gray-400">
-                                            {new Date(session.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                                        </p>
-                                    </div>
-                                    <div className="text-right">
-                                        <span className="text-xs text-gray-500 bg-gray-700 px-2 py-1 rounded block">
-                                            {session.actual_duration_minutes || session.duration_minutes || 50} min
-                                        </span>
-                                        {session.actual_duration_minutes && session.actual_duration_minutes < (session.duration_minutes || 50) && (
-                                            <span className="text-xs text-yellow-400 mt-1 block">
-                                                ({Math.round((session.actual_duration_minutes / (session.duration_minutes || 50)) * 100)}% completed)
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {session.reflection && (
-                                    <div className="mt-3 p-3 bg-gray-900 rounded-md">
-                                        <p className="text-sm font-semibold text-green-400 mb-1">Reflection:</p>
-                                        <p className="text-sm text-gray-300">{session.reflection}</p>
-                                    </div>
-                                )}
-
-                                {session.captured_thoughts && (
-                                    <div className="mt-2 p-3 bg-gray-900 rounded-md">
-                                        <p className="text-xs font-semibold text-gray-400 mb-1">Captured Thoughts:</p>
-                                        <p className="text-xs text-gray-400">{session.captured_thoughts}</p>
-                                    </div>
-                                )}
-
-                                <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-4">
-                                    <div>
-                                        <p className="text-xs font-semibold text-red-400 mb-1">Disruptors:</p>
-                                        {session.disruptors && Object.entries(session.disruptors).filter(([, val]) => val > 0).length > 0 ? (
-                                            <div className="space-y-1">
-                                                {Object.entries(session.disruptors).filter(([, val]) => val > 0).map(([key, val]) => (
-                                                    <p key={key} className="text-xs text-gray-400 capitalize">{key}: {val}</p>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <p className="text-xs text-gray-400">None</p>
-                                        )}
-                                    </div>
-                                    <div>
-                                        <p className="text-xs font-semibold text-green-400 mb-1">Tools Used:</p>
-                                        {session.toolkit_usage && Object.keys(session.toolkit_usage).length > 0 ? (
-                                            <div className="space-y-1">
-                                                {Object.entries(session.toolkit_usage).slice(0, 3).map(([key, val]) => (
-                                                    <p key={key} className="text-xs text-gray-400 truncate">"{key}": {val}</p>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <p className="text-xs text-gray-400">None</p>
-                                        )}
-                                    </div>
-                                    <div>
-                                        <p className="text-xs font-semibold text-cyan-400 mb-1">Recharge:</p>
-                                        {session.recharge_usage && Object.keys(session.recharge_usage).length > 0 ? (
-                                            <div className="space-y-1">
-                                                {Object.entries(session.recharge_usage).slice(0, 3).map(([key, val]) => (
-                                                    <p key={key} className="text-xs text-gray-400 truncate">"{key}": {val}</p>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <p className="text-xs text-gray-400">None</p>
-                                        )}
-                                    </div>
-                                </div>
-                            </Card>
-                        ))}
-                    </div>
+                    <SessionHistoryGrouped sessions={sessionHistory} />
                 )}
             </HistorySection>
         </div>
