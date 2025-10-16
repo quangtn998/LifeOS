@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useFocusTimer } from '../../contexts/FocusTimerContext';
 import Card from '../../components/Card';
 import HistorySection from '../../components/HistorySection';
+import SessionCompletionDialog from '../../components/SessionCompletionDialog';
 import { PlayIcon, PauseIcon, RefreshCwIcon, PlusCircleIcon, TrashIcon, SkipForwardIcon } from '../../components/icons/Icons';
 import { CustomTool, DailyPlan } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
@@ -13,6 +14,7 @@ import { GUIDE_CONTENT } from '../../constants/guideContent';
 interface FocusSessionHistory {
   id: string;
   date: string;
+  session_number: number;
   goal: string;
   captured_thoughts: string;
   reflection: string;
@@ -25,6 +27,8 @@ interface FocusSessionHistory {
   toolkit_usage: Record<string, number>;
   recharge_usage: Record<string, number>;
   duration_minutes: number;
+  actual_duration_minutes: number;
+  completed: boolean;
 }
 
 const PHASES = {
@@ -56,6 +60,8 @@ const FocusTimerPage: React.FC = () => {
         sessionStats,
         capturedThoughts,
         reflection,
+        showCompletionDialog,
+        actualDurationMinutes,
         setSessionGoal,
         setCapturedThoughts,
         setReflection,
@@ -66,6 +72,7 @@ const FocusTimerPage: React.FC = () => {
         trackToolUsage,
         trackRechargeUsage,
         formatTime,
+        handleSessionComplete,
     } = useFocusTimer();
 
     const [dailyAdventure, setDailyAdventure] = useState<string | null>(null);
@@ -106,9 +113,11 @@ const FocusTimerPage: React.FC = () => {
                 .from('focus_sessions')
                 .select('*')
                 .eq('user_id', user.id)
+                .eq('completed', true)
                 .neq('date', new Date().toISOString().split('T')[0])
                 .order('date', { ascending: false })
-                .limit(30);
+                .order('session_number', { ascending: false })
+                .limit(50);
             if (error) throw error;
             setSessionHistory(data || []);
         } catch (err) {
@@ -159,6 +168,16 @@ const FocusTimerPage: React.FC = () => {
 
     return (
         <div className="space-y-6">
+            <SessionCompletionDialog
+                isOpen={showCompletionDialog}
+                sessionGoal={sessionGoal}
+                actualDuration={actualDurationMinutes}
+                plannedDuration={50}
+                sessionStats={sessionStats}
+                onStartNew={() => handleSessionComplete(true)}
+                onDone={() => handleSessionComplete(false)}
+            />
+
             <h1 className="text-3xl font-bold text-white">Focus Timer</h1>
 
             <Card className="w-full text-center">
@@ -301,14 +320,26 @@ const FocusTimerPage: React.FC = () => {
                             <Card key={session.id} className="bg-gray-800/30">
                                 <div className="flex justify-between items-start mb-2">
                                     <div>
-                                        <h3 className="text-lg font-semibold text-cyan-400">{session.goal || 'No goal set'}</h3>
+                                        <div className="flex items-center gap-2">
+                                            <h3 className="text-lg font-semibold text-cyan-400">{session.goal || 'No goal set'}</h3>
+                                            <span className="text-xs text-gray-500 bg-gray-700 px-2 py-1 rounded">
+                                                Session #{session.session_number}
+                                            </span>
+                                        </div>
                                         <p className="text-sm text-gray-400">
                                             {new Date(session.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                                         </p>
                                     </div>
-                                    <span className="text-xs text-gray-500 bg-gray-700 px-2 py-1 rounded">
-                                        {session.duration_minutes || 50} min
-                                    </span>
+                                    <div className="text-right">
+                                        <span className="text-xs text-gray-500 bg-gray-700 px-2 py-1 rounded block">
+                                            {session.actual_duration_minutes || session.duration_minutes || 50} min
+                                        </span>
+                                        {session.actual_duration_minutes && session.actual_duration_minutes < (session.duration_minutes || 50) && (
+                                            <span className="text-xs text-yellow-400 mt-1 block">
+                                                ({Math.round((session.actual_duration_minutes / (session.duration_minutes || 50)) * 100)}% completed)
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
 
                                 {session.reflection && (
