@@ -20,14 +20,18 @@ interface FocusTimerContextType {
   isTimerRunning: boolean;
   showCompletionDialog: boolean;
   actualDurationMinutes: number;
+  currentSessionNumber: number;
+  soundEnabled: boolean;
 
   setSessionGoal: (goal: string) => void;
   setCapturedThoughts: (thoughts: string) => void;
   setReflection: (reflection: string) => void;
   setSessionStats: React.Dispatch<React.SetStateAction<FocusSessionStats>>;
+  setSoundEnabled: (enabled: boolean) => void;
   toggleTimer: () => void;
   resetTimer: () => void;
   skipToNextPhase: () => void;
+  endSession: () => void;
   trackDisruptor: (disruptor: keyof FocusSessionStats['disruptors']) => void;
   trackToolUsage: (toolText: string) => void;
   trackRechargeUsage: (activityText: string) => void;
@@ -64,6 +68,10 @@ export const FocusTimerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [pauseStartTime, setPauseStartTime] = useState<number | null>(null);
   const [actualDurationMinutes, setActualDurationMinutes] = useState(0);
   const [currentSessionNumber, setCurrentSessionNumber] = useState(1);
+  const [soundEnabled, setSoundEnabled] = useState(() => {
+    const saved = localStorage.getItem('focusTimerSoundEnabled');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
 
   const timerRef = useRef<number | null>(null);
   const planEndAudio = useRef<HTMLAudioElement | null>(null);
@@ -71,10 +79,59 @@ export const FocusTimerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const reflectEndAudio = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    planEndAudio.current = new Audio("data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=");
-    focusEndAudio.current = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQwwAAAAAP//A/8E/wX/Bv8I/wz/D/8T/xb/Gf8f/yn/Lv80/zf/Qv9I/0z/Uv9c/2P/b/9z/3f/gv+H/4z/kP+U/5r/o/+p/63/sv+5/7//xP/H/8n/zv/T/9j/2v/f/9//4f/k/+b/6P/s/+7/8v/0//b/+//8//8A");
-    reflectEndAudio.current = new Audio("data:audio/wav;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQIAAAD//v8A/wE=");
-  }, []);
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+
+    const createBeep = (frequency: number, duration: number, volume: number = 0.3) => {
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+
+      oscillator.frequency.value = frequency;
+      oscillator.type = 'sine';
+
+      gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+
+      return { oscillator, gainNode, duration };
+    };
+
+    const playSound = (beeps: Array<{freq: number, delay: number, duration: number}>) => {
+      return () => {
+        if (!soundEnabled) return;
+        beeps.forEach(({freq, delay, duration}) => {
+          setTimeout(() => {
+            const {oscillator} = createBeep(freq, duration);
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + duration);
+          }, delay);
+        });
+      };
+    };
+
+    planEndAudio.current = {
+      play: playSound([
+        {freq: 440, delay: 0, duration: 0.15},
+        {freq: 554, delay: 150, duration: 0.15}
+      ])
+    } as any;
+
+    focusEndAudio.current = {
+      play: playSound([
+        {freq: 523, delay: 0, duration: 0.2},
+        {freq: 659, delay: 200, duration: 0.2},
+        {freq: 784, delay: 400, duration: 0.3}
+      ])
+    } as any;
+
+    reflectEndAudio.current = {
+      play: playSound([
+        {freq: 659, delay: 0, duration: 0.2},
+        {freq: 523, delay: 200, duration: 0.3}
+      ])
+    } as any;
+  }, [soundEnabled]);
 
   const logFocusSession = useCallback(async (duration: number) => {
     if (!user) return;
@@ -259,6 +316,49 @@ export const FocusTimerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setSecondsLeft(-1);
   }, [currentPhase, focusStartTime, secondsLeft, totalPauseDuration]);
 
+  const endSession = useCallback(async () => {
+    setIsActive(false);
+
+    if (currentPhase === 'FOCUS' && focusStartTime) {
+      const endTime = Date.now();
+      const totalElapsed = (endTime - focusStartTime) / 1000;
+      const actualFocusTime = Math.max(0, totalElapsed - totalPauseDuration);
+      const actualMinutes = Math.round(actualFocusTime / 60);
+
+      setActualDurationMinutes(actualMinutes);
+      await logFocusSession(actualMinutes);
+
+      if (!user) return;
+      const today = new Date().toISOString().split('T')[0];
+
+      await supabase.from('focus_sessions').insert({
+        user_id: user.id,
+        date: today,
+        session_number: currentSessionNumber,
+        goal: sessionGoal,
+        captured_thoughts: capturedThoughts,
+        reflection: '',
+        disruptors: sessionStats.disruptors,
+        toolkit_usage: sessionStats.toolkit,
+        recharge_usage: {},
+        duration_minutes: PHASES.FOCUS.duration / 60,
+        start_time: new Date(focusStartTime).toISOString(),
+        end_time: new Date(endTime).toISOString(),
+        actual_duration_minutes: actualMinutes,
+        total_pause_duration_seconds: totalPauseDuration,
+        completed: false,
+      });
+
+      await resetTimer();
+    } else if (currentPhase === 'REFLECT') {
+      const endTime = Date.now();
+      await saveSessionData(focusStartTime, endTime, totalPauseDuration, actualDurationMinutes);
+      setShowCompletionDialog(true);
+    } else {
+      await resetTimer();
+    }
+  }, [currentPhase, focusStartTime, totalPauseDuration, user, currentSessionNumber, sessionGoal, capturedThoughts, sessionStats, logFocusSession, resetTimer, saveSessionData, actualDurationMinutes]);
+
   const trackDisruptor = useCallback(async (disruptor: keyof FocusSessionStats['disruptors']) => {
     setSessionStats(s => ({ ...s, disruptors: {...s.disruptors, [disruptor]: s.disruptors[disruptor] + 1 }}));
   }, []);
@@ -291,6 +391,11 @@ export const FocusTimerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const isTimerRunning = isActive || currentPhase !== 'PLAN' || secondsLeft !== PHASES.PLAN.duration;
 
+  const handleSoundToggle = useCallback((enabled: boolean) => {
+    setSoundEnabled(enabled);
+    localStorage.setItem('focusTimerSoundEnabled', JSON.stringify(enabled));
+  }, []);
+
   return (
     <FocusTimerContext.Provider value={{
       secondsLeft,
@@ -303,13 +408,17 @@ export const FocusTimerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       isTimerRunning,
       showCompletionDialog,
       actualDurationMinutes,
+      currentSessionNumber,
+      soundEnabled,
       setSessionGoal,
       setCapturedThoughts,
       setReflection,
       setSessionStats,
+      setSoundEnabled: handleSoundToggle,
       toggleTimer,
       resetTimer,
       skipToNextPhase,
+      endSession,
       trackDisruptor,
       trackToolUsage,
       trackRechargeUsage,

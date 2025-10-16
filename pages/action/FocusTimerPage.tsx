@@ -6,7 +6,7 @@ import Card from '../../components/Card';
 import HistorySection from '../../components/HistorySection';
 import SessionCompletionDialog from '../../components/SessionCompletionDialog';
 import SessionHistoryGrouped from '../../components/SessionHistoryGrouped';
-import { PlayIcon, PauseIcon, RefreshCwIcon, PlusCircleIcon, TrashIcon, SkipForwardIcon } from '../../components/icons/Icons';
+import { PlayIcon, PauseIcon, RefreshCwIcon, PlusCircleIcon, TrashIcon, SkipForwardIcon, VolumeIcon, VolumeOffIcon } from '../../components/icons/Icons';
 import { CustomTool, DailyPlan } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
 import ExpandableGuide from '../../components/ExpandableGuide';
@@ -63,12 +63,16 @@ const FocusTimerPage: React.FC = () => {
         reflection,
         showCompletionDialog,
         actualDurationMinutes,
+        currentSessionNumber,
+        soundEnabled,
         setSessionGoal,
         setCapturedThoughts,
         setReflection,
+        setSoundEnabled,
         toggleTimer,
         resetTimer,
         skipToNextPhase,
+        endSession,
         trackDisruptor,
         trackToolUsage,
         trackRechargeUsage,
@@ -198,21 +202,42 @@ const FocusTimerPage: React.FC = () => {
                 onDone={() => handleSessionComplete(false, fetchSessionHistory)}
             />
 
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <h1 className="text-3xl font-bold text-white">Focus Timer</h1>
-                {currentPhase === 'PLAN' && !isActive && (
+                <div className="flex items-center gap-3">
                     <button
-                        onClick={resetTimer}
-                        className="mt-4 md:mt-0 px-6 py-2 font-bold text-white bg-cyan-500 rounded-md hover:bg-cyan-600 flex items-center justify-center gap-2"
+                        onClick={() => setSoundEnabled(!soundEnabled)}
+                        className={`px-4 py-2 rounded-md font-medium transition-colors flex items-center gap-2 ${
+                            soundEnabled
+                                ? 'bg-cyan-600 text-white hover:bg-cyan-700'
+                                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                        }`}
+                        title={soundEnabled ? 'Sound notifications enabled' : 'Sound notifications disabled'}
                     >
-                        <PlusCircleIcon className="w-5 h-5" />
-                        Start New Session
+                        {soundEnabled ? <VolumeIcon className="w-5 h-5" /> : <VolumeOffIcon className="w-5 h-5" />}
+                        <span className="hidden sm:inline">Sound</span>
                     </button>
-                )}
+                    {currentPhase === 'PLAN' && !isActive && (
+                        <button
+                            onClick={resetTimer}
+                            className="px-6 py-2 font-bold text-white bg-cyan-500 rounded-md hover:bg-cyan-600 flex items-center justify-center gap-2"
+                        >
+                            <PlusCircleIcon className="w-5 h-5" />
+                            Start New Session
+                        </button>
+                    )}
+                </div>
             </div>
 
             <Card className="w-full text-center">
-                <h2 className={`text-2xl font-bold ${phase.color}`}>{phase.name}</h2>
+                <div className="flex items-center justify-center gap-3 mb-4">
+                    <h2 className={`text-2xl font-bold ${phase.color}`}>{phase.name}</h2>
+                    {(currentPhase !== 'PLAN' || isActive) && (
+                        <span className="px-3 py-1 text-sm font-bold bg-gradient-to-r from-cyan-600 to-blue-600 text-white rounded-full border-2 border-cyan-400 shadow-lg">
+                            Session #{currentSessionNumber}
+                        </span>
+                    )}
+                </div>
                 <div className={`my-6 text-7xl md:text-8xl font-mono font-bold ${phase.color}`}>
                     {formatTime(secondsLeft)}
                 </div>
@@ -225,6 +250,16 @@ const FocusTimerPage: React.FC = () => {
                         <SkipForwardIcon className="w-6 h-6"/>
                     </button>
                 </div>
+                {(currentPhase !== 'PLAN' || isActive) && (
+                    <div className="mt-6">
+                        <button
+                            onClick={endSession}
+                            className="px-6 py-2 font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors shadow-md"
+                        >
+                            End Session
+                        </button>
+                    </div>
+                )}
             </Card>
 
             {currentPhase === 'PLAN' && (

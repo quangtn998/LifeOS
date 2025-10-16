@@ -12,7 +12,7 @@ const PHASES = {
 const FloatingTimer: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { secondsLeft, isActive, currentPhase, toggleTimer, resetTimer, formatTime, isTimerRunning } = useFocusTimer();
+  const { secondsLeft, isActive, currentPhase, currentSessionNumber, toggleTimer, resetTimer, formatTime, isTimerRunning } = useFocusTimer();
   const [isMinimized, setIsMinimized] = useState(false);
 
   const isFocusTimerPage = location.pathname === '/action/focus-timer';
@@ -43,6 +43,9 @@ const FloatingTimer: React.FC = () => {
           <div className="flex items-center gap-2">
             <div className={`w-2 h-2 rounded-full ${phase.color} ${isActive ? 'animate-pulse' : ''}`}></div>
             <span className="text-xs font-semibold text-gray-300">{phase.name}</span>
+            <span className="px-2 py-0.5 text-xs font-bold bg-cyan-600 text-white rounded-full">
+              #{currentSessionNumber}
+            </span>
           </div>
           <div className="flex items-center gap-1">
             <button
