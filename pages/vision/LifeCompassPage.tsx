@@ -30,7 +30,7 @@ const LifeCompassPage: React.FC = () => {
         .from('life_compass')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
       
       if (error && error.code !== 'PGRST116') throw error;
       const loadedData = compassData ? {
