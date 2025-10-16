@@ -48,11 +48,11 @@ const WeeklyPlanPage: React.FC = () => {
         const startDateStr = weekStartDate.toISOString().split('T')[0];
 
         // Fetch weekly review
-        const { data: reviewData } = await supabase.from('weekly_review').select('*').eq('user_id', user.id).eq('week_start_date', startDateStr).single();
+        const { data: reviewData } = await supabase.from('weekly_review').select('*').eq('user_id', user.id).eq('week_start_date', startDateStr).maybeSingle();
         const loadedReview = reviewData || { week_start_date: startDateStr, wins: '', challenges: '', nextWeekPriorities: [], quests_status: '', plan_adjustments: ''};
 
         // Fetch ideal week
-        const { data: weekData } = await supabase.from('ideal_week').select('blocks, ical_url').eq('user_id', user.id).single();
+        const { data: weekData } = await supabase.from('ideal_week').select('blocks, ical_url').eq('user_id', user.id).maybeSingle();
         const loadedBlocks = weekData?.blocks || [];
         const loadedIcal = weekData?.ical_url || '';
 

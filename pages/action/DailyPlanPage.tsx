@@ -44,7 +44,7 @@ const DailyPlanPage: React.FC = () => {
             .select('*')
             .eq('user_id', user.id)
             .eq('date', today)
-            .single();
+            .maybeSingle();
 
         const loadedData = data || { date: today, manifesto: { feeling: '', gratitude: '', adventure: '' }, tasks: [], shutdown: { accomplished: '', learned: '', tomorrow: '' } };
 
@@ -57,7 +57,7 @@ const DailyPlanPage: React.FC = () => {
         
         // Fetch weekly priorities for Golden Thread
         const weekStartDate = getStartOfWeek(new Date()).toISOString().split('T')[0];
-        const { data: reviewData } = await supabase.from('weekly_review').select('nextWeekPriorities').eq('user_id', user.id).eq('week_start_date', weekStartDate).single();
+        const { data: reviewData } = await supabase.from('weekly_review').select('nextWeekPriorities').eq('user_id', user.id).eq('week_start_date', weekStartDate).maybeSingle();
         if(reviewData) {
             setWeeklyPriorities(reviewData.nextWeekPriorities || []);
         }
