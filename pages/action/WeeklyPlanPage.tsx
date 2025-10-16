@@ -228,7 +228,7 @@ const WeeklyPlanPage: React.FC = () => {
                   </p>
                 </div>
                 {googleCalendarUrl && (
-                  <div className="mt-4 w-full" style={{ height: '600px' }}>
+                  <div className="mt-4 w-full h-[500px] md:h-[700px] lg:h-[800px]">
                     <iframe
                       src={googleCalendarUrl}
                       style={{ border: 0 }}
