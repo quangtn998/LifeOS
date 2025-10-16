@@ -110,11 +110,13 @@ const FocusTimerPage: React.FC = () => {
         if (!user) return;
         setHistoryLoading(true);
         try {
+            const today = new Date().toISOString().split('T')[0];
             const { data, error } = await supabase
                 .from('focus_sessions')
                 .select('*')
                 .eq('user_id', user.id)
                 .eq('completed', true)
+                .neq('date', today)
                 .order('date', { ascending: false })
                 .order('session_number', { ascending: false })
                 .limit(50);
@@ -178,7 +180,18 @@ const FocusTimerPage: React.FC = () => {
                 onDone={() => handleSessionComplete(false)}
             />
 
-            <h1 className="text-3xl font-bold text-white">Focus Timer</h1>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+                <h1 className="text-3xl font-bold text-white">Focus Timer</h1>
+                {currentPhase === 'PLAN' && !isActive && (
+                    <button
+                        onClick={resetTimer}
+                        className="mt-4 md:mt-0 px-6 py-2 font-bold text-white bg-cyan-500 rounded-md hover:bg-cyan-600 flex items-center justify-center gap-2"
+                    >
+                        <PlusCircleIcon className="w-5 h-5" />
+                        Start New Session
+                    </button>
+                )}
+            </div>
 
             <Card className="w-full text-center">
                 <h2 className={`text-2xl font-bold ${phase.color}`}>{phase.name}</h2>
