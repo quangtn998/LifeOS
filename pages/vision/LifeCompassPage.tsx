@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../contexts/AuthContext';
-import { LifeCompassData, RoleModel, BecomingProfile } from '../../types';
+import { LifeCompassData, RoleModel, BecomingProfile, ImportantThing, Principle } from '../../types';
 import Card from '../../components/Card';
 import { SaveIcon, PlusCircleIcon, TrashIcon, EditIcon } from '../../components/icons/Icons';
 import { v4 as uuidv4 } from 'uuid';
@@ -13,7 +13,7 @@ const LifeCompassPage: React.FC = () => {
   const { user } = useAuth();
   const [data, setData] = useState<LifeCompassData>({
     eulogy: '', bucketList: '', mission: '', success: '',
-    roleModels: [], becoming: []
+    roleModels: [], becoming: [], importantThings: [], principles: []
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -37,8 +37,10 @@ const LifeCompassPage: React.FC = () => {
         mission: compassData.mission || '',
         success: compassData.success || '',
         roleModels: compassData.role_models || [],
-        becoming: compassData.becoming || []
-      } : { eulogy: '', bucketList: '', mission: '', success: '', roleModels: [], becoming: [] };
+        becoming: compassData.becoming || [],
+        importantThings: compassData.important_things || [],
+        principles: compassData.principles || []
+      } : { eulogy: '', bucketList: '', mission: '', success: '', roleModels: [], becoming: [], importantThings: [], principles: [] };
       setData(loadedData);
     } catch (err: any) { setError(err.message); } 
     finally { setLoading(false); }
@@ -61,6 +63,8 @@ const LifeCompassPage: React.FC = () => {
           success: data.success,
           role_models: data.roleModels.map(({ editing, ...rest }) => rest),
           becoming: data.becoming.map(({ editing, ...rest }) => rest),
+          important_things: data.importantThings.map(({ editing, ...rest }) => rest),
+          principles: data.principles.map(({ editing, ...rest }) => rest),
         }, { onConflict: 'user_id' });
 
       if (error) throw error;
@@ -102,6 +106,30 @@ const LifeCompassPage: React.FC = () => {
   };
   const deleteBecomingProfile = (id: string) => {
     setData(p => ({ ...p, becoming: p.becoming.filter(bp => bp.id !== id) }));
+  };
+
+  // --- Important Things Handlers ---
+  const addImportantThing = () => {
+    const newThing: ImportantThing = { id: uuidv4(), title: 'New Important Thing', details: '', editing: true };
+    setData(p => ({ ...p, importantThings: [...p.importantThings, newThing] }));
+  };
+  const updateImportantThing = (id: string, field: keyof ImportantThing, value: any) => {
+    setData(p => ({ ...p, importantThings: p.importantThings.map(it => it.id === id ? { ...it, [field]: value } : it) }));
+  };
+  const deleteImportantThing = (id: string) => {
+    setData(p => ({ ...p, importantThings: p.importantThings.filter(it => it.id !== id) }));
+  };
+
+  // --- Principles Handlers ---
+  const addPrinciple = () => {
+    const newPrinciple: Principle = { id: uuidv4(), title: 'New Principle', details: '', editing: true };
+    setData(p => ({ ...p, principles: [...p.principles, newPrinciple] }));
+  };
+  const updatePrinciple = (id: string, field: keyof Principle, value: any) => {
+    setData(p => ({ ...p, principles: p.principles.map(pr => pr.id === id ? { ...pr, [field]: value } : pr) }));
+  };
+  const deletePrinciple = (id: string) => {
+    setData(p => ({ ...p, principles: p.principles.filter(pr => pr.id !== id) }));
   };
 
 
@@ -190,6 +218,30 @@ const LifeCompassPage: React.FC = () => {
                 </button>
             </div>
         </div>
+
+        {/* Important Things to Remember */}
+        <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-white">Important Things to Remember ({data.importantThings.length})</h2>
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {data.importantThings.map(it => <ImportantThingCard key={it.id} item={it} onUpdate={updateImportantThing} onDelete={deleteImportantThing} />)}
+                <button onClick={addImportantThing} className="flex flex-col items-center justify-center min-h-[200px] p-6 border-2 border-dashed border-gray-700 rounded-lg hover:bg-gray-800 transition-colors">
+                  <PlusCircleIcon className="w-10 h-10 text-gray-500" />
+                  <span className="mt-2 text-sm font-medium text-gray-400">Add Important Thing</span>
+                </button>
+            </div>
+        </div>
+
+        {/* Principles */}
+        <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-white">Principles ({data.principles.length})</h2>
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {data.principles.map(pr => <PrincipleCard key={pr.id} item={pr} onUpdate={updatePrinciple} onDelete={deletePrinciple} />)}
+                <button onClick={addPrinciple} className="flex flex-col items-center justify-center min-h-[200px] p-6 border-2 border-dashed border-gray-700 rounded-lg hover:bg-gray-800 transition-colors">
+                  <PlusCircleIcon className="w-10 h-10 text-gray-500" />
+                  <span className="mt-2 text-sm font-medium text-gray-400">Add Principle</span>
+                </button>
+            </div>
+        </div>
     </div>
   );
 };
@@ -268,6 +320,64 @@ const BecomingCard: React.FC<{profile: BecomingProfile, onUpdate: Function, onDe
         <p className="mt-1 text-sm text-white whitespace-pre-wrap">{sacrifices || "N/A"}</p>
       </div>
        <p className="mt-4 text-xs italic text-gray-400">Do you truly want to become this, or just experience the feeling of it?</p>
+    </Card>
+  )
+}
+
+const ImportantThingCard: React.FC<{item: ImportantThing, onUpdate: Function, onDelete: Function}> = ({item, onUpdate, onDelete}) => {
+  const { id, title, details, editing } = item;
+  if(editing) {
+    return (
+      <Card className="flex flex-col space-y-3">
+        <input type="text" value={title} onChange={e => onUpdate(id, 'title', e.target.value)} placeholder="Title..." className="w-full p-2 text-xl font-bold text-white bg-gray-900 border-gray-700 rounded-md"/>
+        <textarea value={details} onChange={e => onUpdate(id, 'details', e.target.value)} placeholder="Details..." rows={5} className="w-full p-2 text-sm bg-gray-900 border-gray-700 rounded-md"/>
+        <button onClick={() => onUpdate(id, 'editing', false)} className="w-full py-2 text-sm font-semibold text-white bg-cyan-500 rounded-md hover:bg-cyan-600">Done</button>
+      </Card>
+    )
+  }
+  return (
+    <Card className="flex flex-col">
+       <div className="flex items-start justify-between">
+        <div>
+          <h3 className="text-xl font-bold text-white">{title}</h3>
+        </div>
+        <div className="flex space-x-2">
+          <button onClick={() => onUpdate(id, 'editing', true)} className="p-1 text-gray-400 hover:text-white"><EditIcon className="w-4 h-4"/></button>
+          <button onClick={() => onDelete(id)} className="p-1 text-gray-400 hover:text-red-500"><TrashIcon className="w-4 h-4"/></button>
+        </div>
+      </div>
+       <div className="mt-4">
+        <p className="text-sm text-white whitespace-pre-wrap">{details || "N/A"}</p>
+      </div>
+    </Card>
+  )
+}
+
+const PrincipleCard: React.FC<{item: Principle, onUpdate: Function, onDelete: Function}> = ({item, onUpdate, onDelete}) => {
+  const { id, title, details, editing } = item;
+  if(editing) {
+    return (
+      <Card className="flex flex-col space-y-3">
+        <input type="text" value={title} onChange={e => onUpdate(id, 'title', e.target.value)} placeholder="Principle title..." className="w-full p-2 text-xl font-bold text-white bg-gray-900 border-gray-700 rounded-md"/>
+        <textarea value={details} onChange={e => onUpdate(id, 'details', e.target.value)} placeholder="Details..." rows={5} className="w-full p-2 text-sm bg-gray-900 border-gray-700 rounded-md"/>
+        <button onClick={() => onUpdate(id, 'editing', false)} className="w-full py-2 text-sm font-semibold text-white bg-cyan-500 rounded-md hover:bg-cyan-600">Done</button>
+      </Card>
+    )
+  }
+  return (
+    <Card className="flex flex-col">
+       <div className="flex items-start justify-between">
+        <div>
+          <h3 className="text-xl font-bold text-white">{title}</h3>
+        </div>
+        <div className="flex space-x-2">
+          <button onClick={() => onUpdate(id, 'editing', true)} className="p-1 text-gray-400 hover:text-white"><EditIcon className="w-4 h-4"/></button>
+          <button onClick={() => onDelete(id)} className="p-1 text-gray-400 hover:text-red-500"><TrashIcon className="w-4 h-4"/></button>
+        </div>
+      </div>
+       <div className="mt-4">
+        <p className="text-sm text-white whitespace-pre-wrap">{details || "N/A"}</p>
+      </div>
     </Card>
   )
 }

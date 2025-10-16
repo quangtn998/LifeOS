@@ -24,6 +24,20 @@ export interface BecomingProfile {
   editing?: boolean;
 }
 
+export interface ImportantThing {
+  id: string;
+  title: string;
+  details: string;
+  editing?: boolean;
+}
+
+export interface Principle {
+  id: string;
+  title: string;
+  details: string;
+  editing?: boolean;
+}
+
 export interface LifeCompassData {
   user_id?: string;
   eulogy: string;
@@ -32,6 +46,8 @@ export interface LifeCompassData {
   success: string;
   roleModels: RoleModel[];
   becoming: BecomingProfile[];
+  importantThings: ImportantThing[];
+  principles: Principle[];
 }
 
 // Vision -> Future Sketch
