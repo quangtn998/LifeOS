@@ -31,13 +31,25 @@ const QuarterlyQuestsPage: React.FC = () => {
         .from('quests')
         .select('*')
         .eq('user_id', user.id)
-        .eq('quarter', currentQuarter)
         .order('created_at', { ascending: true });
       if (error) throw error;
-      setQuests(data?.map(q => ({...q, editing: false, expanded: false})) || []);
 
-      if (data && data.length > 0) {
-        await fetchAssessments(data.map(q => q.id));
+      const currentQuarterQuests = data?.filter(q => !q.quarter || q.quarter === '' || q.quarter === currentQuarter) || [];
+
+      const questsToUpdate = data?.filter(q => !q.quarter || q.quarter === '') || [];
+      if (questsToUpdate.length > 0) {
+        for (const quest of questsToUpdate) {
+          await supabase
+            .from('quests')
+            .update({ quarter: currentQuarter })
+            .eq('id', quest.id);
+        }
+      }
+
+      setQuests(currentQuarterQuests.map(q => ({...q, quarter: q.quarter || currentQuarter, editing: false, expanded: false})));
+
+      if (currentQuarterQuests.length > 0) {
+        await fetchAssessments(currentQuarterQuests.map(q => q.id));
       }
     } catch (err: any) {
       setError(err.message);
