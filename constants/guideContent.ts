@@ -178,44 +178,200 @@ export const GUIDE_CONTENT = {
   `,
 
   battlefieldAssessment: `
-    <p class="mb-3">The Battlefield Assessment is a strategic framework that helps you turn your quarterly quests into actionable plans. It follows a 3-step process: Quarter Assessment, Monthly Planning, and Weekly Execution.</p>
+    <p class="mb-3">Battlefield Assessment giúp bạn đánh giá chiến trường để biến các mục tiêu mơ hồ thành một kế hoạch tác chiến rõ ràng, có thể thực thi và đo lường được theo Quý, Tháng, Tuần.</p>
 
-    <p class="mb-3"><strong>The 3-Step Framework:</strong></p>
-
-    <p class="mb-3"><strong>Step 1: Quarter Assessment (Đánh giá Chiến trường Quý)</strong></p>
-    <p class="mb-2">At the beginning of each quarter, assess your battlefield:</p>
+    <p class="mb-3"><strong>Cấu trúc:</strong> Bạn sẽ điền đánh giá CHO CẢ QUATER, sau đó tạo các Quest riêng lẻ bên dưới. Có 2 loại đánh giá:</p>
     <ul class="list-disc list-inside mb-3 space-y-1">
-      <li><strong>Work:</strong> Analyze market trends, define OKRs, and formulate strategic plays</li>
-      <li><strong>Life:</strong> Conduct personal SWOT, identify your fortress to conquer, and plan habits/projects</li>
+      <li><strong>WORK:</strong> Cho công việc/team/doanh nghiệp</li>
+      <li><strong>LIFE:</strong> Cho phát triển cá nhân</li>
     </ul>
 
-    <p class="mb-3"><strong>Step 2: Monthly Planning (Triển khai Kế hoạch Tháng)</strong></p>
-    <p class="mb-2">At the start of each month, review and adjust:</p>
-    <ul class="list-disc list-inside mb-3 space-y-1">
-      <li>Check progress on your frontline</li>
-      <li>Set sprint goals for the month</li>
-      <li>Create a detailed action calendar</li>
+    <hr class="my-6 border-gray-600">
+
+    <h3 class="text-lg font-bold text-cyan-400 mb-4">[WORK] BATTLEFIELD ASSESSMENT CHO CÔNG VIỆC</h3>
+
+    <p class="mb-4"><strong>Bước 1: ĐÁNH GIÁ CHIẾN TRƯỜNG QUÝ</strong> (Thực hiện 1 lần vào tuần cuối của quý trước)</p>
+
+    <div class="mb-4">
+      <p class="font-semibold mb-2">1.1. Xác định Địa hình & Thời tiết (Market & Trends Analysis):</p>
+      <ul class="list-disc list-inside ml-4 space-y-1 text-sm">
+        <li><strong>Địa hình (Thị trường):</strong> Khách hàng đang ở đâu? Kênh nào hiệu quả nhất? "Vùng đất" nào chưa khai phá?</li>
+        <li><strong>Địa thế (Nguồn lực):</strong> "Cao điểm" (điểm mạnh) và "đầm lầy" (điểm yếu) của team là gì?</li>
+        <li><strong>Thời tiết (Xu hướng):</strong> Có "cơn bão" hay "luồng gió thuận" nào trong 3 tháng tới?</li>
+        <li><strong>Đối thủ:</strong> "Quân địch" đang tập kết ở đâu? Có động thái gì đáng chú ý?</li>
+      </ul>
+    </div>
+
+    <div class="mb-4">
+      <p class="font-semibold mb-2">1.2. Xác định Mục tiêu Chiến dịch (Define Mission Objectives - OKRs):</p>
+      <ul class="list-disc list-inside ml-4 space-y-1 text-sm">
+        <li><strong>Objective:</strong> Chọn MỘT mục tiêu quan trọng nhất cho quý này</li>
+        <li><strong>Key Results:</strong> Những "cứ điểm" nào cần phá hủy để đạt mục tiêu?</li>
+      </ul>
+    </div>
+
+    <div class="mb-4">
+      <p class="font-semibold mb-2">1.3. Vạch định Kế hoạch Tấn công (Formulate Strategic Plays):</p>
+      <ul class="list-disc list-inside ml-4 space-y-1 text-sm">
+        <li><strong>Mũi giáp công:</strong> Sẽ mở những "mặt trận" nào?</li>
+        <li><strong>Phân bổ Binh lực:</strong> Ai chỉ huy? Cần bao nhiêu ngân sách và công cụ?</li>
+      </ul>
+    </div>
+
+    <p class="mb-4 mt-6"><strong>Bước 2: TRIỂN KHAI KẾ HOẠCH THÁNG</strong> (Thực hiện vào ngày đầu tiên của tháng)</p>
+
+    <div class="mb-4">
+      <p class="font-semibold mb-2">2.1. Review Mặt trận (Monthly Frontline Check-in):</p>
+      <ul class="list-disc list-inside ml-4 space-y-1 text-sm">
+        <li>So với kế hoạch Quý, đang thắng hay thua?</li>
+        <li>"Mặt trận" nào tiến triển tốt? Nào bị đình trệ?</li>
+        <li>Có thông tin tình báo mới về đối thủ hay thị trường?</li>
+      </ul>
+    </div>
+
+    <div class="mb-4">
+      <p class="font-semibold mb-2">2.2. Xác định Mục tiêu Xung kích (Monthly Sprint Goals):</p>
+      <ul class="list-disc list-inside ml-4 space-y-1 text-sm">
+        <li>Dựa trên kế hoạch Quý, mục tiêu ưu tiên số 1 của tháng này là gì?</li>
+      </ul>
+    </div>
+
+    <div class="mb-4">
+      <p class="font-semibold mb-2">2.3. Lên Lịch Tác chiến (Action Plan):</p>
+      <ul class="list-disc list-inside ml-4 space-y-1 text-sm">
+        <li>Chia nhỏ mục tiêu tháng thành các "trận đánh" theo tuần</li>
+        <li>Ai chịu trách nhiệm cho "trận đánh" nào?</li>
+      </ul>
+    </div>
+
+    <p class="mb-4 mt-6"><strong>Bước 3: TÁC CHIẾN HÀNG TUẦN</strong> (Thực hiện vào sáng thứ Hai hàng tuần)</p>
+
+    <div class="mb-4">
+      <p class="font-semibold mb-2">3.1. Giao ban Chỉ huy (Weekly Huddle):</p>
+      <ul class="list-disc list-inside ml-4 space-y-1 text-sm">
+        <li>Tuần trước mỗi người đã hoàn thành nhiệm vụ gì?</li>
+        <li>Gặp khó khăn, "thiệt hại" gì?</li>
+        <li>Có "trận hỏa hoạn" nào cần dập tắt ngay không?</li>
+      </ul>
+    </div>
+
+    <div class="mb-4">
+      <p class="font-semibold mb-2">3.2. Nhiệm vụ Tuần (Weekly Tasks):</p>
+      <ul class="list-disc list-inside ml-4 space-y-1 text-sm">
+        <li>Mỗi cá nhân xác định 3 nhiệm vụ quan trọng nhất trong tuần này</li>
+        <li>Cần ai hỗ trợ gì? Có rào cản nào đang chặn đường?</li>
+      </ul>
+    </div>
+
+    <div class="mb-4">
+      <p class="font-semibold mb-2">3.3. Tổng kết & Rút kinh nghiệm (End-of-Week Debrief):</p>
+      <ul class="list-disc list-inside ml-4 space-y-1 text-sm">
+        <li><em>Thực hiện vào chiều thứ Sáu</em></li>
+        <li>Tuần này thắng ở đâu, thua ở đâu?</li>
+        <li>Bài học kinh nghiệm để tuần sau "chiến đấu" tốt hơn?</li>
+      </ul>
+    </div>
+
+    <hr class="my-6 border-gray-600">
+
+    <h3 class="text-lg font-bold text-cyan-400 mb-4">[LIFE] BATTLEFIELD ASSESSMENT CHO CÁ NHÂN</h3>
+
+    <p class="mb-4"><strong>Bước 1: ĐÁNH GIÁ BẢN ĐỒ CUỘC SỐNG</strong> (Thực hiện 1 lần vào cuối mỗi quý)</p>
+
+    <div class="mb-4">
+      <p class="font-semibold mb-2">1.1. Xác định Địa hình Nội tại (Personal SWOT):</p>
+      <ul class="list-disc list-inside ml-4 space-y-1 text-sm">
+        <li><strong>Strengths:</strong> Kỹ năng tốt nhất? Thói quen nào đang giúp bạn tiến bộ?</li>
+        <li><strong>Weaknesses:</strong> Kỹ năng nào cần cải thiện? Thói quen xấu nào đang kéo bạn lại?</li>
+        <li><strong>Opportunities:</strong> Khóa học nào hay? Mối quan hệ nào tiềm năng? Dự án nào thú vị?</li>
+        <li><strong>Threats:</strong> Điều gì làm bạn kiệt sức? Có rủi ro nào (sức khỏe, tài chính, công việc)?</li>
+      </ul>
+    </div>
+
+    <div class="mb-4">
+      <p class="font-semibold mb-2">1.2. Xác định "Thành trì" Cần Chinh phục (Define Quarterly Mission):</p>
+      <ul class="list-disc list-inside ml-4 space-y-1 text-sm">
+        <li>Chọn 1-2 Lĩnh vực Ưu tiên: Sự nghiệp, Sức khỏe, Tài chính, Mối quan hệ, Phát triển bản thân</li>
+        <li>Thiết lập Mục tiêu cụ thể cho mỗi lĩnh vực</li>
+      </ul>
+    </div>
+
+    <div class="mb-4">
+      <p class="font-semibold mb-2">1.3. Lên Kế hoạch "Binh chủng" (Formulate Habits & Projects):</p>
+      <ul class="list-disc list-inside ml-4 space-y-1 text-sm">
+        <li><strong>Dự án Chính:</strong> Cần thực hiện những dự án nào để đạt mục tiêu?</li>
+        <li><strong>Thói quen Hỗ trợ:</strong> Cần xây dựng thói quen nào?</li>
+      </ul>
+    </div>
+
+    <p class="mb-4 mt-6"><strong>Bước 2: LẬP KẾ HOẠCH HÀNH QUÂN THÁNG</strong> (Thực hiện vào Chủ nhật cuối tháng)</p>
+
+    <div class="mb-4">
+      <p class="font-semibold mb-2">2.1. Review Tiến độ:</p>
+      <ul class="list-disc list-inside ml-4 space-y-1 text-sm">
+        <li>So với mục tiêu Quý, bạn đang ở đâu trên bản đồ?</li>
+        <li>Điều gì hiệu quả? Điều gì không?</li>
+      </ul>
+    </div>
+
+    <div class="mb-4">
+      <p class="font-semibold mb-2">2.2. Xác định Cột mốc Tháng:</p>
+      <ul class="list-disc list-inside ml-4 space-y-1 text-sm">
+        <li>Chia nhỏ mục tiêu Quý thành các cột mốc cụ thể cho tháng này</li>
+      </ul>
+    </div>
+
+    <div class="mb-4">
+      <p class="font-semibold mb-2">2.3. Lên Lịch trình:</p>
+      <ul class="list-disc list-inside ml-4 space-y-1 text-sm">
+        <li>Đưa các dự án và thói quen vào lịch của bạn</li>
+        <li>Thời gian nào trong ngày/tuần bạn sẽ dành cho chúng?</li>
+      </ul>
+    </div>
+
+    <p class="mb-4 mt-6"><strong>Bước 3: THỰC THI NHIỆM VỤ TUẦN</strong> (Thực hiện vào tối Chủ nhật hàng tuần)</p>
+
+    <div class="mb-4">
+      <p class="font-semibold mb-2">3.1. Giao ban với "Chỉ huy" (Self-Reflection):</p>
+      <ul class="list-disc list-inside ml-4 space-y-1 text-sm">
+        <li>Tuần qua bạn đã làm được gì tốt?</li>
+        <li>Điều gì đã làm bạn xao nhãng?</li>
+        <li>Cảm xúc của bạn thế nào?</li>
+      </ul>
+    </div>
+
+    <div class="mb-4">
+      <p class="font-semibold mb-2">3.2. Xác định 3 Nhiệm vụ Tối quan trọng (The "Big 3"):</p>
+      <ul class="list-disc list-inside ml-4 space-y-1 text-sm">
+        <li>Chọn ra 3 nhiệm vụ quan trọng nhất phải hoàn thành trong tuần tới</li>
+        <li>Đây là những "trận đánh" sẽ tạo ra tác động lớn nhất</li>
+      </ul>
+    </div>
+
+    <div class="mb-4">
+      <p class="font-semibold mb-2">3.3. Chuẩn bị "Vũ khí & Lương thảo" (Prepare for Success):</p>
+      <ul class="list-disc list-inside ml-4 space-y-1 text-sm">
+        <li>Lên lịch cụ thể: Đặt 3 nhiệm vụ vào các khung giờ cố định trong lịch</li>
+        <li>Dọn dẹp "Chiến trường": Loại bỏ yếu tố gây xao nhãng</li>
+        <li>Chuẩn bị sẵn những gì cần thiết (đồ đi tập, dọn dẹp bàn làm việc...)</li>
+        <li>Tự hỏi: "Làm thế nào để phiên bản tương lai của mình dễ dàng thực hiện nhiệm vụ này nhất?"</li>
+      </ul>
+    </div>
+
+    <hr class="my-6 border-gray-600">
+
+    <p class="mt-6"><strong>Cách sử dụng:</strong></p>
+    <ul class="list-disc list-inside space-y-1">
+      <li>Điền Battlefield Assessment ở đầu trang (cho cả Quarter)</li>
+      <li>Toggle giữa Work và Life để điền từng loại</li>
+      <li>Expand từng bước để điền thông tin chi tiết</li>
+      <li>Bước 1: Điền 1 lần vào đầu Quý</li>
+      <li>Bước 2: Cập nhật vào đầu mỗi Tháng</li>
+      <li>Bước 3: Cập nhật hàng Tuần</li>
+      <li>Dữ liệu tự động lưu khi bạn nhập</li>
     </ul>
 
-    <p class="mb-3"><strong>Step 3: Weekly Execution (Tác chiến Hàng tuần)</strong></p>
-    <p class="mb-2">Every week, execute with precision:</p>
-    <ul class="list-disc list-inside mb-3 space-y-1">
-      <li>Hold a weekly command huddle (review last week)</li>
-      <li>Define your top 3 weekly missions</li>
-      <li>Conduct a weekly debrief to learn and adjust</li>
-    </ul>
-
-    <p class="mb-3"><strong>How to use this framework:</strong></p>
-    <ul class="list-disc list-inside mb-3 space-y-1">
-      <li>Click the chevron icon next to any quest to expand its assessment</li>
-      <li>Fill out each step as you progress through the quarter</li>
-      <li>Step 1 is completed once at the start of the quarter</li>
-      <li>Step 2 is updated at the beginning of each month</li>
-      <li>Step 3 is updated every week</li>
-      <li>All data is automatically saved as you type</li>
-    </ul>
-
-    <p><em>This framework transforms abstract goals into concrete action plans. Consistent execution is the key to winning your quests.</em></p>
+    <p class="mt-4"><em>Framework này biến mục tiêu trừu tượng thành kế hoạch hành động cụ thể. Thực thi nhất quán là chìa khóa để chinh phục các quest của bạn.</em></p>
   `,
 
   // Daily Plan Guides
