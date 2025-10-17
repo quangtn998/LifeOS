@@ -242,6 +242,8 @@ const QuarterlyQuestsPage: React.FC = () => {
 
       <QuarterlyAssessmentSection currentQuarter={currentQuarter} />
 
+      <h2 class="text-xl font-bold text-white">Quarterly Quests</h2>
+      
       <ExpandableGuide title="How to choose great quests" content={GUIDE_CONTENT.quarterlyQuests} />
 
       <Card>
