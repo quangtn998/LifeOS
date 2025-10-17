@@ -30,7 +30,7 @@ const Sidebar: React.FC = () => {
     { name: 'VISION', isHeader: true },
     { name: 'Life Compass', path: '/vision/life-compass', icon: CompassIcon },
     { name: 'Future Sketch', path: '/vision/future-sketch', icon: TargetIcon },
-    { name: 'Quarterly Quests', path: '/vision/quarterly-quests', icon: ZapIcon },
+    { name: 'Quarterly', path: '/vision/quarterly-quests', icon: ZapIcon },
     { name: 'ACTION', isHeader: true },
     { name: 'Weekly', path: '/action/weekly-plan', icon: CalendarIcon },
     { name: 'Daily', path: '/action/daily-plan', icon: CheckCircleIcon },
