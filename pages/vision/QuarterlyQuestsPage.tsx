@@ -238,12 +238,11 @@ const QuarterlyQuestsPage: React.FC = () => {
         </p>
       </div>
 
-      <ExpandableGuide title="How to choose great quests" content={GUIDE_CONTENT.quarterlyQuests} />
-      <ExpandableGuide title="How to use Battlefield Assessment / Cách sử dụng Đánh giá Chiến trường" content={GUIDE_CONTENT.battlefieldAssessment} />
-
       {error && <p className="text-red-500 bg-red-500/10 p-3 rounded-md">Error: {error}</p>}
 
       <QuarterlyAssessmentSection currentQuarter={currentQuarter} />
+
+      <ExpandableGuide title="How to choose great quests" content={GUIDE_CONTENT.quarterlyQuests} />
 
       <Card>
         <form onSubmit={addQuest} className="flex flex-col gap-3 sm:flex-row">

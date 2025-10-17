@@ -126,33 +126,21 @@ const QuarterlyAssessmentSection: React.FC<QuarterlyAssessmentSectionProps> = ({
   return (
     <>
       <Card>
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="w-full flex items-center justify-between"
-        >
-          <div>
-            <h2 className="text-xl font-bold text-white text-left">
-              Quarterly Battlefield Assessment
-            </h2>
-            <p className="text-sm text-gray-400 mt-1 text-left">
-              Comprehensive quarterly assessment for both Work and Life (done once per quarter)
-            </p>
-          </div>
-          {isExpanded ? (
-            <ChevronUpIcon className="w-6 h-6 text-gray-400 flex-shrink-0" />
-          ) : (
-            <ChevronDownIcon className="w-6 h-6 text-gray-400 flex-shrink-0" />
-          )}
-        </button>
+        <div>
+          <h2 className="text-xl font-bold text-white">
+            Quarterly Battlefield Assessment
+          </h2>
+          <p className="text-sm text-gray-400 mt-1">
+            Comprehensive quarterly assessment for both Work and Life (done once per quarter)
+          </p>
+        </div>
 
-        {isExpanded && (
-          <div className="mt-6">
-            <QuarterlyBattlefieldAssessmentComponent
-              assessment={assessment}
-              onAssessmentChange={handleAssessmentChange}
-            />
-          </div>
-        )}
+        <div className="mt-6">
+          <QuarterlyBattlefieldAssessmentComponent
+            assessment={assessment}
+            onAssessmentChange={handleAssessmentChange}
+          />
+        </div>
       </Card>
 
       {saveStatus !== 'idle' && (

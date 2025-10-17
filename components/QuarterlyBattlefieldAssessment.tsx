@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { QuarterlyBattlefieldAssessment as AssessmentType } from '../types';
-import { ChevronDownIcon, ChevronUpIcon } from './icons/Icons';
 
 interface QuarterlyBattlefieldAssessmentProps {
   assessment: AssessmentType | null;
@@ -11,154 +10,29 @@ const QuarterlyBattlefieldAssessment: React.FC<QuarterlyBattlefieldAssessmentPro
   assessment,
   onAssessmentChange,
 }) => {
-  const [expandedStep, setExpandedStep] = useState<number | null>(1);
-  const [activeCategory, setActiveCategory] = useState<'work' | 'life'>('work');
-
-  const toggleStep = (step: number) => {
-    setExpandedStep(expandedStep === step ? null : step);
-  };
-
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-cyan-400">
-          Battlefield Assessment / Đánh giá Chiến trường
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div>
+        <h3 className="text-lg font-semibold text-cyan-400 mb-4">
+          WORK - Battlefield Assessment
         </h3>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setActiveCategory('work')}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              activeCategory === 'work'
-                ? 'bg-cyan-500 text-white'
-                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-            }`}
-          >
-            Work
-          </button>
-          <button
-            onClick={() => setActiveCategory('life')}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              activeCategory === 'life'
-                ? 'bg-cyan-500 text-white'
-                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-            }`}
-          >
-            Life
-          </button>
+        <div className="space-y-6">
+          <WorkStep1Fields assessment={assessment} onChange={onAssessmentChange} />
+          <WorkStep2Fields assessment={assessment} onChange={onAssessmentChange} />
+          <WorkStep3Fields assessment={assessment} onChange={onAssessmentChange} />
         </div>
       </div>
 
-      <div className="space-y-3">
-        {activeCategory === 'work' ? (
-          <>
-            <AssessmentStep
-              stepNumber={1}
-              title="Bước 1: Đánh giá Chiến trường Quý / Quarter Assessment"
-              subtitle="Thực hiện 1 lần vào tuần cuối của quý trước"
-              isExpanded={expandedStep === 1}
-              onToggle={() => toggleStep(1)}
-            >
-              <WorkStep1Fields assessment={assessment} onChange={onAssessmentChange} />
-            </AssessmentStep>
-
-            <AssessmentStep
-              stepNumber={2}
-              title="Bước 2: Triển khai Kế hoạch Tháng / Monthly Plan"
-              subtitle="Thực hiện vào ngày đầu tiên của tháng"
-              isExpanded={expandedStep === 2}
-              onToggle={() => toggleStep(2)}
-            >
-              <WorkStep2Fields assessment={assessment} onChange={onAssessmentChange} />
-            </AssessmentStep>
-
-            <AssessmentStep
-              stepNumber={3}
-              title="Bước 3: Tác chiến Hàng tuần / Weekly Execution"
-              subtitle="Thực hiện vào sáng thứ Hai hàng tuần"
-              isExpanded={expandedStep === 3}
-              onToggle={() => toggleStep(3)}
-            >
-              <WorkStep3Fields assessment={assessment} onChange={onAssessmentChange} />
-            </AssessmentStep>
-          </>
-        ) : (
-          <>
-            <AssessmentStep
-              stepNumber={1}
-              title="Bước 1: Đánh giá Nội tại Quý / Quarter Self Assessment"
-              subtitle="Thực hiện 1 lần vào cuối mỗi quý"
-              isExpanded={expandedStep === 1}
-              onToggle={() => toggleStep(1)}
-            >
-              <LifeStep1Fields assessment={assessment} onChange={onAssessmentChange} />
-            </AssessmentStep>
-
-            <AssessmentStep
-              stepNumber={2}
-              title="Bước 2: Kế hoạch Tháng / Monthly Plan"
-              subtitle="Thực hiện vào Chủ nhật cuối tháng"
-              isExpanded={expandedStep === 2}
-              onToggle={() => toggleStep(2)}
-            >
-              <LifeStep2Fields assessment={assessment} onChange={onAssessmentChange} />
-            </AssessmentStep>
-
-            <AssessmentStep
-              stepNumber={3}
-              title="Bước 3: Hành động Hàng tuần / Weekly Action"
-              subtitle="Thực hiện vào tối Chủ nhật hàng tuần"
-              isExpanded={expandedStep === 3}
-              onToggle={() => toggleStep(3)}
-            >
-              <LifeStep3Fields assessment={assessment} onChange={onAssessmentChange} />
-            </AssessmentStep>
-          </>
-        )}
+      <div>
+        <h3 className="text-lg font-semibold text-cyan-400 mb-4">
+          LIFE - Battlefield Assessment
+        </h3>
+        <div className="space-y-6">
+          <LifeStep1Fields assessment={assessment} onChange={onAssessmentChange} />
+          <LifeStep2Fields assessment={assessment} onChange={onAssessmentChange} />
+          <LifeStep3Fields assessment={assessment} onChange={onAssessmentChange} />
+        </div>
       </div>
-    </div>
-  );
-};
-
-interface AssessmentStepProps {
-  stepNumber: number;
-  title: string;
-  subtitle?: string;
-  isExpanded: boolean;
-  onToggle: () => void;
-  children: React.ReactNode;
-}
-
-const AssessmentStep: React.FC<AssessmentStepProps> = ({
-  title,
-  subtitle,
-  isExpanded,
-  onToggle,
-  children,
-}) => {
-  return (
-    <div className="border border-gray-700 rounded-md bg-gray-800/30">
-      <button
-        onClick={onToggle}
-        className="w-full flex items-center justify-between p-3 text-left hover:bg-gray-700/30 transition-colors rounded-md"
-      >
-        <div className="flex-1">
-          <span className="text-sm font-medium text-white block">{title}</span>
-          {subtitle && (
-            <span className="text-xs text-gray-400 mt-1 block italic">{subtitle}</span>
-          )}
-        </div>
-        {isExpanded ? (
-          <ChevronUpIcon className="w-5 h-5 text-gray-400 flex-shrink-0" />
-        ) : (
-          <ChevronDownIcon className="w-5 h-5 text-gray-400 flex-shrink-0" />
-        )}
-      </button>
-
-      {isExpanded && (
-        <div className="p-4 space-y-4">
-          {children}
-        </div>
-      )}
     </div>
   );
 };
@@ -170,7 +44,10 @@ interface FieldProps {
 
 const WorkStep1Fields: React.FC<FieldProps> = ({ assessment, onChange }) => {
   return (
-    <>
+    <StepSection
+      title="Bước 1: Đánh giá Chiến trường Quý"
+      subtitle="Thực hiện 1 lần vào tuần cuối của quý trước"
+    >
       <AssessmentField
         label="1.1. Xác định Địa hình & Thời tiết / Market & Trends Analysis"
         helper="Địa hình (Thị trường): Khách hàng đang ở đâu? Kênh nào hiệu quả nhất? | Địa thế: Cao điểm (điểm mạnh) và đầm lầy (điểm yếu) của team? | Thời tiết: Có cơn bão hay luồng gió thuận nào? | Đối thủ: Quân địch đang tập kết ở đâu?"
@@ -192,13 +69,16 @@ const WorkStep1Fields: React.FC<FieldProps> = ({ assessment, onChange }) => {
         value={assessment?.work_step1_strategic_plays || ''}
         onChange={(val) => onChange('work_step1_strategic_plays', val)}
       />
-    </>
+    </StepSection>
   );
 };
 
 const WorkStep2Fields: React.FC<FieldProps> = ({ assessment, onChange }) => {
   return (
-    <>
+    <StepSection
+      title="Bước 2: Triển khai Kế hoạch Tháng"
+      subtitle="Thực hiện vào ngày đầu tiên của tháng"
+    >
       <AssessmentField
         label="2.1. Review Mặt trận / Frontline Check-in"
         helper="So với kế hoạch Quý, đang thắng hay thua? Mặt trận nào tiến triển tốt? Nào bị đình trệ? Có thông tin tình báo mới?"
@@ -220,13 +100,16 @@ const WorkStep2Fields: React.FC<FieldProps> = ({ assessment, onChange }) => {
         value={assessment?.work_step2_action_plan || ''}
         onChange={(val) => onChange('work_step2_action_plan', val)}
       />
-    </>
+    </StepSection>
   );
 };
 
 const WorkStep3Fields: React.FC<FieldProps> = ({ assessment, onChange }) => {
   return (
-    <>
+    <StepSection
+      title="Bước 3: Tác chiến Hàng tuần"
+      subtitle="Thực hiện vào sáng thứ Hai hàng tuần"
+    >
       <AssessmentField
         label="3.1. Giao ban Chỉ huy / Weekly Command Huddle"
         helper="Tuần trước mỗi người đã hoàn thành nhiệm vụ gì? Gặp khó khăn, thiệt hại gì? Có trận hỏa hoạn nào cần dập tắt ngay?"
@@ -248,13 +131,16 @@ const WorkStep3Fields: React.FC<FieldProps> = ({ assessment, onChange }) => {
         value={assessment?.work_step3_weekly_debrief || ''}
         onChange={(val) => onChange('work_step3_weekly_debrief', val)}
       />
-    </>
+    </StepSection>
   );
 };
 
 const LifeStep1Fields: React.FC<FieldProps> = ({ assessment, onChange }) => {
   return (
-    <>
+    <StepSection
+      title="Bước 1: Đánh giá Bản đồ Cuộc sống"
+      subtitle="Thực hiện 1 lần vào cuối mỗi quý"
+    >
       <AssessmentField
         label="1.1. Địa hình Nội tại (SWOT) / Personal SWOT Analysis"
         helper="Strengths: Kỹ năng tốt nhất? Thói quen nào giúp bạn tiến bộ? | Weaknesses: Kỹ năng nào cần cải thiện? Thói quen xấu nào kéo bạn lại? | Opportunities: Khóa học, mối quan hệ, dự án nào tiềm năng? | Threats: Điều gì làm bạn kiệt sức? Rủi ro nào?"
@@ -276,13 +162,16 @@ const LifeStep1Fields: React.FC<FieldProps> = ({ assessment, onChange }) => {
         value={assessment?.life_step1_habits_projects || ''}
         onChange={(val) => onChange('life_step1_habits_projects', val)}
       />
-    </>
+    </StepSection>
   );
 };
 
 const LifeStep2Fields: React.FC<FieldProps> = ({ assessment, onChange }) => {
   return (
-    <>
+    <StepSection
+      title="Bước 2: Kế hoạch Tháng"
+      subtitle="Thực hiện vào Chủ nhật cuối tháng"
+    >
       <AssessmentField
         label="2.1. Review Tiến độ / Progress Review"
         helper="So với mục tiêu Quý, bạn đang ở đâu trên bản đồ? Điều gì hiệu quả? Điều gì không?"
@@ -304,13 +193,16 @@ const LifeStep2Fields: React.FC<FieldProps> = ({ assessment, onChange }) => {
         value={assessment?.life_step2_schedule || ''}
         onChange={(val) => onChange('life_step2_schedule', val)}
       />
-    </>
+    </StepSection>
   );
 };
 
 const LifeStep3Fields: React.FC<FieldProps> = ({ assessment, onChange }) => {
   return (
-    <>
+    <StepSection
+      title="Bước 3: Hành động Hàng tuần"
+      subtitle="Thực hiện vào tối Chủ nhật hàng tuần"
+    >
       <AssessmentField
         label="3.1. Giao ban với Chỉ huy (Self-check) / Self Reflection"
         helper="Tuần qua bạn đã làm được gì tốt? Điều gì đã làm bạn xao nhãng? Cảm xúc của bạn thế nào?"
@@ -332,7 +224,27 @@ const LifeStep3Fields: React.FC<FieldProps> = ({ assessment, onChange }) => {
         value={assessment?.life_step3_prepare_success || ''}
         onChange={(val) => onChange('life_step3_prepare_success', val)}
       />
-    </>
+    </StepSection>
+  );
+};
+
+interface StepSectionProps {
+  title: string;
+  subtitle: string;
+  children: React.ReactNode;
+}
+
+const StepSection: React.FC<StepSectionProps> = ({ title, subtitle, children }) => {
+  return (
+    <div className="border border-gray-700 rounded-md bg-gray-800/30 p-4">
+      <div className="mb-4">
+        <h4 className="text-sm font-semibold text-white">{title}</h4>
+        <p className="text-xs text-gray-400 mt-1 italic">{subtitle}</p>
+      </div>
+      <div className="space-y-4">
+        {children}
+      </div>
+    </div>
   );
 };
 
@@ -362,7 +274,7 @@ const AssessmentField: React.FC<AssessmentFieldProps> = ({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         className="w-full p-2.5 text-sm text-white bg-gray-900 border border-gray-700 rounded-md focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 resize-none"
-        rows={4}
+        rows={value.length > 200 ? 8 : 4}
       />
     </div>
   );
