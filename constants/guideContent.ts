@@ -177,6 +177,47 @@ export const GUIDE_CONTENT = {
     <p><em>Review your quests weekly. Adjust if needed. The goal is progress, not perfection.</em></p>
   `,
 
+  battlefieldAssessment: `
+    <p class="mb-3">The Battlefield Assessment is a strategic framework that helps you turn your quarterly quests into actionable plans. It follows a 3-step process: Quarter Assessment, Monthly Planning, and Weekly Execution.</p>
+
+    <p class="mb-3"><strong>The 3-Step Framework:</strong></p>
+
+    <p class="mb-3"><strong>Step 1: Quarter Assessment (Đánh giá Chiến trường Quý)</strong></p>
+    <p class="mb-2">At the beginning of each quarter, assess your battlefield:</p>
+    <ul class="list-disc list-inside mb-3 space-y-1">
+      <li><strong>Work:</strong> Analyze market trends, define OKRs, and formulate strategic plays</li>
+      <li><strong>Life:</strong> Conduct personal SWOT, identify your fortress to conquer, and plan habits/projects</li>
+    </ul>
+
+    <p class="mb-3"><strong>Step 2: Monthly Planning (Triển khai Kế hoạch Tháng)</strong></p>
+    <p class="mb-2">At the start of each month, review and adjust:</p>
+    <ul class="list-disc list-inside mb-3 space-y-1">
+      <li>Check progress on your frontline</li>
+      <li>Set sprint goals for the month</li>
+      <li>Create a detailed action calendar</li>
+    </ul>
+
+    <p class="mb-3"><strong>Step 3: Weekly Execution (Tác chiến Hàng tuần)</strong></p>
+    <p class="mb-2">Every week, execute with precision:</p>
+    <ul class="list-disc list-inside mb-3 space-y-1">
+      <li>Hold a weekly command huddle (review last week)</li>
+      <li>Define your top 3 weekly missions</li>
+      <li>Conduct a weekly debrief to learn and adjust</li>
+    </ul>
+
+    <p class="mb-3"><strong>How to use this framework:</strong></p>
+    <ul class="list-disc list-inside mb-3 space-y-1">
+      <li>Click the chevron icon next to any quest to expand its assessment</li>
+      <li>Fill out each step as you progress through the quarter</li>
+      <li>Step 1 is completed once at the start of the quarter</li>
+      <li>Step 2 is updated at the beginning of each month</li>
+      <li>Step 3 is updated every week</li>
+      <li>All data is automatically saved as you type</li>
+    </ul>
+
+    <p><em>This framework transforms abstract goals into concrete action plans. Consistent execution is the key to winning your quests.</em></p>
+  `,
+
   // Daily Plan Guides
   morningManifesto: `
     <p class="mb-3">The Morning Manifesto is a 5-minute ritual that sets the tone for your entire day. It primes your mind for intentionality and gratitude.</p>
