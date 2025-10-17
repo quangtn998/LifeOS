@@ -156,12 +156,6 @@ const QuarterlyAssessmentSection: React.FC<QuarterlyAssessmentSectionProps> = ({
         <em>Đánh giá toàn diện hàng quý cho cả Công việc và Cuộc sống (thực hiện mỗi quý một lần hoặc khi nào cần thiết)</em>
     </p>
 
-
-          
-
-
-
-          
           
         </div>
 
