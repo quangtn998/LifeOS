@@ -231,7 +231,7 @@ const QuarterlyQuestsPage: React.FC = () => {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-white">Quarterly Quests</h1>
+        <h1 className="text-3xl font-bold text-white">Quarterly</h1>
         <p className="text-cyan-400 text-lg font-semibold mt-2">{currentQuarter}</p>
         <p className="text-gray-400 max-w-3xl mt-2">
           This is the bridge between Vision and Action. Define one Main Quest and several Side Quests for Work and Life.
