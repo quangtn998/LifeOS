@@ -263,6 +263,14 @@ const AssessmentField: React.FC<AssessmentFieldProps> = ({
   value,
   onChange,
 }) => {
+  const calculateRows = (text: string) => {
+    if (!text) return 4;
+    const lineBreaks = (text.match(/\n/g) || []).length;
+    const estimatedLines = Math.ceil(text.length / 80);
+    const totalLines = Math.max(lineBreaks + 1, estimatedLines);
+    return Math.max(4, Math.min(totalLines, 30));
+  };
+
   return (
     <div>
       <label className="block text-xs font-medium text-gray-300 mb-1.5">{label}</label>
@@ -273,8 +281,8 @@ const AssessmentField: React.FC<AssessmentFieldProps> = ({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full p-2.5 text-sm text-white bg-gray-900 border border-gray-700 rounded-md focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 resize-none"
-        rows={value.length > 200 ? 8 : 4}
+        className="w-full p-2.5 text-sm text-white bg-gray-900 border border-gray-700 rounded-md focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 resize-y"
+        rows={calculateRows(value)}
       />
     </div>
   );
