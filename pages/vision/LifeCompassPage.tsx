@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { useAutoSave } from '../../hooks/useAutoSave';
 import ExpandableGuide from '../../components/ExpandableGuide';
 import { GUIDE_CONTENT } from '../../constants/guideContent';
+import AutoResizeTextarea from '../../components/AutoResizeTextarea';
 
 const LifeCompassPage: React.FC = () => {
   const { user } = useAuth();
@@ -169,28 +170,36 @@ const LifeCompassPage: React.FC = () => {
                   <div className="mt-2">
                     <ExpandableGuide title="How to approach this exercise" content={GUIDE_CONTENT.eulogyMethod} />
                   </div>
-                  <textarea value={data.eulogy} onChange={e => handleChange('eulogy', e.target.value)} rows={8} className="w-full p-2 mt-3 text-white bg-gray-900 border-gray-700 rounded-md"/>
+                  <div className="mt-3">
+                    <AutoResizeTextarea value={data.eulogy} onChange={(val) => handleChange('eulogy', val)} placeholder="Write your eulogy..." />
+                  </div>
                 </Card>
                 <Card>
                   <h2 className="font-bold">The Bucket List</h2>
                   <div className="mt-2">
                     <ExpandableGuide title="How to approach this exercise" content={GUIDE_CONTENT.bucketList} />
                   </div>
-                  <textarea value={data.bucketList} onChange={e => handleChange('bucketList', e.target.value)} rows={8} className="w-full p-2 mt-3 text-white bg-gray-900 border-gray-700 rounded-md"/>
+                  <div className="mt-3">
+                    <AutoResizeTextarea value={data.bucketList} onChange={(val) => handleChange('bucketList', val)} placeholder="List experiences you want to have..." />
+                  </div>
                 </Card>
                 <Card>
                   <h2 className="font-bold">The Mission Prompt</h2>
                   <div className="mt-2">
                     <ExpandableGuide title="How to approach this exercise" content={GUIDE_CONTENT.missionPrompt} />
                   </div>
-                  <textarea value={data.mission} onChange={e => handleChange('mission', e.target.value)} rows={8} className="w-full p-2 mt-3 text-white bg-gray-900 border-gray-700 rounded-md"/>
+                  <div className="mt-3">
+                    <AutoResizeTextarea value={data.mission} onChange={(val) => handleChange('mission', val)} placeholder="What is your mission in life?" />
+                  </div>
                 </Card>
                 <Card>
                   <h2 className="font-bold">The Success Prompt</h2>
                   <div className="mt-2">
                     <ExpandableGuide title="How to approach this exercise" content={GUIDE_CONTENT.successPrompt} />
                   </div>
-                  <textarea value={data.success} onChange={e => handleChange('success', e.target.value)} rows={8} className="w-full p-2 mt-3 text-white bg-gray-900 border-gray-700 rounded-md"/>
+                  <div className="mt-3">
+                    <AutoResizeTextarea value={data.success} onChange={(val) => handleChange('success', val)} placeholder="What does success mean to you?" />
+                  </div>
                 </Card>
             </div>
         </div>
@@ -255,8 +264,8 @@ const RoleModelCard: React.FC<{model: RoleModel, onUpdate: Function, onDelete: F
         <input type="text" value={name} onChange={e => onUpdate(id, 'name', e.target.value)} className="w-full p-2 text-xl font-bold text-white bg-gray-900 border-gray-700 rounded-md"/>
         <input type="text" value={description} onChange={e => onUpdate(id, 'description', e.target.value)} placeholder="Description (e.g. Entrepreneur)" className="w-full p-2 text-sm text-gray-400 bg-gray-900 border-gray-700 rounded-md"/>
         <input type="text" value={imageUrl} onChange={e => onUpdate(id, 'imageUrl', e.target.value)} placeholder="Image URL" className="w-full p-2 text-sm bg-gray-900 border-gray-700 rounded-md"/>
-        <textarea value={emulate} onChange={e => onUpdate(id, 'emulate', e.target.value)} placeholder="Qualities to emulate..." rows={3} className="w-full p-2 text-sm bg-gray-900 border-gray-700 rounded-md"/>
-        <textarea value={avoid} onChange={e => onUpdate(id, 'avoid', e.target.value)} placeholder="Qualities to avoid..." rows={3} className="w-full p-2 text-sm bg-gray-900 border-gray-700 rounded-md"/>
+        <AutoResizeTextarea value={emulate} onChange={(val) => onUpdate(id, 'emulate', val)} placeholder="Qualities to emulate..." minRows={3} />
+        <AutoResizeTextarea value={avoid} onChange={(val) => onUpdate(id, 'avoid', val)} placeholder="Qualities to avoid..." minRows={3} />
         <button onClick={() => onUpdate(id, 'editing', false)} className="w-full py-2 text-sm font-semibold text-white bg-cyan-500 rounded-md hover:bg-cyan-600">Done</button>
       </Card>
     )
@@ -293,8 +302,8 @@ const BecomingCard: React.FC<{profile: BecomingProfile, onUpdate: Function, onDe
       <Card className="flex flex-col space-y-3">
         <input type="text" value={who} onChange={e => onUpdate(id, 'who', e.target.value)} placeholder="Who you want to become..." className="w-full p-2 text-xl font-bold text-white bg-gray-900 border-gray-700 rounded-md"/>
         <input type="text" value={url} onChange={e => onUpdate(id, 'url', e.target.value)} placeholder="Image URL" className="w-full p-2 text-sm bg-gray-900 border-gray-700 rounded-md"/>
-        <textarea value={traits} onChange={e => onUpdate(id, 'traits', e.target.value)} placeholder="What traits define this person?" rows={3} className="w-full p-2 text-sm bg-gray-900 border-gray-700 rounded-md"/>
-        <textarea value={sacrifices} onChange={e => onUpdate(id, 'sacrifices', e.target.value)} placeholder="What are the costs/sacrifices?" rows={3} className="w-full p-2 text-sm bg-gray-900 border-gray-700 rounded-md"/>
+        <AutoResizeTextarea value={traits} onChange={(val) => onUpdate(id, 'traits', val)} placeholder="What traits define this person?" minRows={3} />
+        <AutoResizeTextarea value={sacrifices} onChange={(val) => onUpdate(id, 'sacrifices', val)} placeholder="What are the costs/sacrifices?" minRows={3} />
         <button onClick={() => onUpdate(id, 'editing', false)} className="w-full py-2 text-sm font-semibold text-white bg-cyan-500 rounded-md hover:bg-cyan-600">Done</button>
       </Card>
     )
@@ -330,7 +339,7 @@ const ImportantThingCard: React.FC<{item: ImportantThing, onUpdate: Function, on
     return (
       <Card className="flex flex-col space-y-3">
         <input type="text" value={title} onChange={e => onUpdate(id, 'title', e.target.value)} placeholder="Title..." className="w-full p-2 text-xl font-bold text-white bg-gray-900 border-gray-700 rounded-md"/>
-        <textarea value={details} onChange={e => onUpdate(id, 'details', e.target.value)} placeholder="Details..." rows={5} className="w-full p-2 text-sm bg-gray-900 border-gray-700 rounded-md"/>
+        <AutoResizeTextarea value={details} onChange={(val) => onUpdate(id, 'details', val)} placeholder="Details..." minRows={5} />
         <button onClick={() => onUpdate(id, 'editing', false)} className="w-full py-2 text-sm font-semibold text-white bg-cyan-500 rounded-md hover:bg-cyan-600">Done</button>
       </Card>
     )
@@ -359,7 +368,7 @@ const PrincipleCard: React.FC<{item: Principle, onUpdate: Function, onDelete: Fu
     return (
       <Card className="flex flex-col space-y-3">
         <input type="text" value={title} onChange={e => onUpdate(id, 'title', e.target.value)} placeholder="Principle title..." className="w-full p-2 text-xl font-bold text-white bg-gray-900 border-gray-700 rounded-md"/>
-        <textarea value={details} onChange={e => onUpdate(id, 'details', e.target.value)} placeholder="Details..." rows={5} className="w-full p-2 text-sm bg-gray-900 border-gray-700 rounded-md"/>
+        <AutoResizeTextarea value={details} onChange={(val) => onUpdate(id, 'details', val)} placeholder="Details..." minRows={5} />
         <button onClick={() => onUpdate(id, 'editing', false)} className="w-full py-2 text-sm font-semibold text-white bg-cyan-500 rounded-md hover:bg-cyan-600">Done</button>
       </Card>
     )

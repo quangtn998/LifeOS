@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { useAutoSave } from '../../hooks/useAutoSave';
 import ExpandableGuide from '../../components/ExpandableGuide';
 import { GUIDE_CONTENT } from '../../constants/guideContent';
+import AutoResizeTextarea from '../../components/AutoResizeTextarea';
 
 const FutureSketchPage: React.FC = () => {
   const { user } = useAuth();
@@ -131,21 +132,27 @@ const FutureSketchPage: React.FC = () => {
               <div className="mt-2">
                 <ExpandableGuide title="How to approach this exercise" content={GUIDE_CONTENT.threeYearDream} />
               </div>
-              <textarea value={data.threeYearDream} onChange={(e) => handleChange('threeYearDream', e.target.value)} rows={8} className="w-full p-2 mt-3 text-white bg-gray-900 border-gray-700 rounded-md"/>
+              <div className="mt-3">
+                <AutoResizeTextarea value={data.threeYearDream} onChange={(val) => handleChange('threeYearDream', val)} placeholder="Describe your life 3 years from now..." />
+              </div>
             </Card>
             <Card>
               <h2 className="font-bold">Odyssey Plan</h2>
               <div className="mt-2">
                 <ExpandableGuide title="How to approach this exercise" content={GUIDE_CONTENT.odysseyPlan} />
               </div>
-              <textarea value={data.odysseyPlan} onChange={(e) => handleChange('odysseyPlan', e.target.value)} rows={8} className="w-full p-2 mt-3 text-white bg-gray-900 border-gray-700 rounded-md"/>
+              <div className="mt-3">
+                <AutoResizeTextarea value={data.odysseyPlan} onChange={(val) => handleChange('odysseyPlan', val)} placeholder="Describe alternative life paths..." />
+              </div>
             </Card>
             <Card className="lg:col-span-2">
               <h2 className="font-bold">Future Calendar</h2>
               <div className="mt-2">
                 <ExpandableGuide title="How to approach this exercise" content={GUIDE_CONTENT.futureCalendar} />
               </div>
-              <textarea value={data.futureCalendar} onChange={(e) => handleChange('futureCalendar', e.target.value)} rows={8} className="w-full p-2 mt-3 text-white bg-gray-900 border-gray-700 rounded-md"/>
+              <div className="mt-3">
+                <AutoResizeTextarea value={data.futureCalendar} onChange={(val) => handleChange('futureCalendar', val)} placeholder="Describe a perfect day in your future..." />
+              </div>
             </Card>
         </div>
       </div>

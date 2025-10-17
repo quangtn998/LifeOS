@@ -9,6 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { useAutoSave } from '../../hooks/useAutoSave';
 import ExpandableGuide from '../../components/ExpandableGuide';
 import { GUIDE_CONTENT } from '../../constants/guideContent';
+import AutoResizeTextarea from '../../components/AutoResizeTextarea';
 
 const getStartOfWeek = (date: Date) => {
     const d = new Date(date);
@@ -189,8 +190,8 @@ const WeeklyPlanPage: React.FC = () => {
                   <ExpandableGuide title="About the Weekly Review" content={GUIDE_CONTENT.weeklyReview} />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
-                    <div><label className="font-semibold">Wins & Accomplishments</label><textarea value={review.wins} onChange={e => handleReviewChange('wins', e.target.value)} rows={4} className="w-full p-2 mt-1 text-white bg-gray-900 border-gray-700 rounded-md"/></div>
-                    <div><label className="font-semibold">Challenges & Lessons</label><textarea value={review.challenges} onChange={e => handleReviewChange('challenges', e.target.value)} rows={4} className="w-full p-2 mt-1 text-white bg-gray-900 border-gray-700 rounded-md"/></div>
+                    <div><label className="font-semibold">Wins & Accomplishments</label><div className="mt-1"><AutoResizeTextarea value={review.wins} onChange={(val) => handleReviewChange('wins', val)} placeholder="What went well this week?" minRows={4} /></div></div>
+                    <div><label className="font-semibold">Challenges & Lessons</label><div className="mt-1"><AutoResizeTextarea value={review.challenges} onChange={(val) => handleReviewChange('challenges', val)} placeholder="What challenges did you face?" minRows={4} /></div></div>
                     <div className="relative">
                         <label className="font-semibold">Top 3-5 Priorities for Next Week</label>
                         <button onClick={() => setShowQuests(!showQuests)} title="Link from Quests" className="ml-2 p-1 text-cyan-400 hover:bg-cyan-500/20 rounded-full inline-block"><ZapIcon className="w-4 h-4"/></button>

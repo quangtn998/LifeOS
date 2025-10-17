@@ -9,6 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { useAutoSave } from '../../hooks/useAutoSave';
 import ExpandableGuide from '../../components/ExpandableGuide';
 import { GUIDE_CONTENT } from '../../constants/guideContent';
+import AutoResizeTextarea from '../../components/AutoResizeTextarea';
 
 const getToday = () => new Date().toISOString().split('T')[0];
 
@@ -202,9 +203,9 @@ const DailyPlanPage: React.FC = () => {
                       <ExpandableGuide title="About the Evening Shutdown" content={GUIDE_CONTENT.eveningShutdown} />
                     </div>
                     <div className="grid grid-cols-1 gap-4 mt-4 md:grid-cols-3">
-                        <div><label className="text-sm font-medium text-gray-400">What did I accomplish?</label><textarea value={plan.shutdown.accomplished} onChange={e => handleShutdownChange('accomplished', e.target.value)} rows={4} className="w-full p-2 mt-1 text-white bg-gray-900 border-gray-700 rounded-md"/></div>
-                        <div><label className="text-sm font-medium text-gray-400">What did I learn?</label><textarea value={plan.shutdown.learned} onChange={e => handleShutdownChange('learned', e.target.value)} rows={4} className="w-full p-2 mt-1 text-white bg-gray-900 border-gray-700 rounded-md"/></div>
-                        <div><label className="text-sm font-medium text-gray-400">What's the plan for tomorrow?</label><textarea value={plan.shutdown.tomorrow} onChange={e => handleShutdownChange('tomorrow', e.target.value)} rows={4} className="w-full p-2 mt-1 text-white bg-gray-900 border-gray-700 rounded-md"/></div>
+                        <div><label className="text-sm font-medium text-gray-400">What did I accomplish?</label><div className="mt-1"><AutoResizeTextarea value={plan.shutdown.accomplished} onChange={(val) => handleShutdownChange('accomplished', val)} placeholder="List your accomplishments..." minRows={4} /></div></div>
+                        <div><label className="text-sm font-medium text-gray-400">What did I learn?</label><div className="mt-1"><AutoResizeTextarea value={plan.shutdown.learned} onChange={(val) => handleShutdownChange('learned', val)} placeholder="What did you learn today?" minRows={4} /></div></div>
+                        <div><label className="text-sm font-medium text-gray-400">What's the plan for tomorrow?</label><div className="mt-1"><AutoResizeTextarea value={plan.shutdown.tomorrow} onChange={(val) => handleShutdownChange('tomorrow', val)} placeholder="Plan for tomorrow..." minRows={4} /></div></div>
                     </div>
                 </Card>
             </div>

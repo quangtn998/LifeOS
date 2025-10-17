@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Quest, QuestAssessment } from '../types';
 import { ChevronDownIcon, ChevronUpIcon } from './icons/Icons';
+import AutoResizeTextarea from './AutoResizeTextarea';
 
 interface BattlefieldAssessmentProps {
   quest: Quest;
@@ -301,12 +302,11 @@ const AssessmentField: React.FC<AssessmentFieldProps> = ({
   return (
     <div>
       <label className="block text-xs font-medium text-gray-300 mb-1.5">{label}</label>
-      <textarea
+      <AutoResizeTextarea
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={onChange}
         placeholder={placeholder}
-        className="w-full p-2.5 text-sm text-white bg-gray-900 border border-gray-700 rounded-md focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 resize-none"
-        rows={4}
+        minRows={4}
       />
     </div>
   );

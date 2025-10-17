@@ -11,6 +11,7 @@ import { CustomTool, DailyPlan } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
 import ExpandableGuide from '../../components/ExpandableGuide';
 import { GUIDE_CONTENT } from '../../constants/guideContent';
+import AutoResizeTextarea from '../../components/AutoResizeTextarea';
 
 interface FocusSessionHistory {
   id: string;
@@ -308,7 +309,9 @@ const FocusTimerPage: React.FC = () => {
 
                       <h3 className="mt-4 font-bold text-white">Capture System</h3>
                       <p className="text-sm text-gray-400">Jot down distracting thoughts here.</p>
-                      <textarea value={capturedThoughts} onChange={e => setCapturedThoughts(e.target.value)} rows={4} className="w-full p-2 mt-2 text-white bg-gray-900 border-gray-700 rounded-md"/>
+                      <div className="mt-2">
+                        <AutoResizeTextarea value={capturedThoughts} onChange={setCapturedThoughts} placeholder="Capture distracting thoughts here..." minRows={4} />
+                      </div>
                     </Card>
                     <Card>
                         <h3 className="font-bold text-white">Focus Toolkit</h3>
@@ -351,7 +354,7 @@ const FocusTimerPage: React.FC = () => {
                                 <div className="p-4 bg-gray-900 rounded-lg">
                                     <h4 className="font-semibold text-yellow-400 mb-2">Reflect (30 seconds):</h4>
                                     <p className="text-sm text-gray-300 mb-3">"What worked? What distracted me? What can I adjust for next time to focus better?" Small changes can make a big impact.</p>
-                                    <textarea value={reflection} onChange={e => setReflection(e.target.value)} rows={4} placeholder="Write your reflections here..." className="w-full p-3 text-white bg-gray-800 border border-gray-700 rounded-md focus:border-green-500 focus:outline-none"/>
+                                    <AutoResizeTextarea value={reflection} onChange={setReflection} placeholder="Write your reflections here..." minRows={4} className="w-full p-3 text-white bg-gray-800 border border-gray-700 rounded-md focus:border-green-500 focus:outline-none" />
                                 </div>
 
                                 <div className="p-4 bg-gray-900 rounded-lg">
