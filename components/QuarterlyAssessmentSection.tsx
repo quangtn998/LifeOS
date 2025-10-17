@@ -125,7 +125,7 @@ const QuarterlyAssessmentSection: React.FC<QuarterlyAssessmentSectionProps> = ({
 
   return (
     <>
-      <Card>
+
         <div>
           <h2 className="text-xl font-bold text-white">
             Quarterly Battlefield Assessment
@@ -165,7 +165,6 @@ const QuarterlyAssessmentSection: React.FC<QuarterlyAssessmentSectionProps> = ({
             onAssessmentChange={handleAssessmentChange}
           />
         </div>
-      </Card>
 
       {saveStatus !== 'idle' && (
         <div className="fixed bottom-4 right-4 bg-gray-800 border border-gray-700 rounded-md px-4 py-2 shadow-lg z-50">
