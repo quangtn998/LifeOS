@@ -151,7 +151,7 @@ const QuarterlyAssessmentSection: React.FC<QuarterlyAssessmentSectionProps> = ({
         3. Giành Lại Quyền Chỉ Huy (Control) 🕹️<br />
         Nó giúp bạn chuyển từ thế bị động phản ứng với hoàn cảnh sang thế chủ động kiến tạo tương lai. Bạn sẽ lường trước được "quân địch" (thách thức), tận dụng "địa lợi" (cơ hội) và chỉ huy "quân ta" (chính bản thân/đội nhóm) một cách có chủ đích.
         <br /><br />
-        Nói đơn giản: Bạn ngừng làm nạn nhân của hoàn cảnh và trở thành người kiến tạo nên chiến thắng của chính mình. Đó là lý do chúng ta phải làm việc này.
+        Nói đơn giản: Ngừng làm nạn nhân của hoàn cảnh và trở thành người kiến tạo nên chiến thắng của chính mình. Đó là lý do chúng ta phải làm việc này.
         <br /><br />
         <em>Đánh giá toàn diện hàng quý cho cả Công việc và Cuộc sống (thực hiện mỗi quý một lần hoặc khi nào cần thiết)</em>
     </p>
