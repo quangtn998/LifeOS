@@ -134,7 +134,41 @@ const QuarterlyAssessmentSection: React.FC<QuarterlyAssessmentSectionProps> = ({
           <p className="text-sm text-gray-400 mt-1">
             Comprehensive quarterly assessment for both Work and Life (done once per quarter)
           </p>
+<div>
+    <h2 className="text-xl font-bold text-white">
+        Quarterly Battlefield Assessment
+    </h2>
+    
+    <p className="text-sm text-gray-400 mt-1">
 
+        <br />
+        <strong>Tại Sao Phải "Đánh Giá Chiến Trường" Mỗi Quý?</strong>
+        <br /><br />
+        Chúng ta làm việc này vì một lý do đơn giản: Để ngừng làm một <em>người lính</em> bị cuốn vào những trận đánh vụn vặt hàng ngày, và trở thành một <strong>vị tướng</strong> đứng trên ngọn đồi, nhìn toàn cảnh và quyết định trận đánh nào đáng để tham gia.
+        <br /><br />
+        Nếu không có nó, chúng ta sẽ rơi vào cảnh "<strong>bận rộn nhưng không hiệu quả</strong>" – chạy khắp nơi dập lửa mà không chiếm được thêm một tấc đất nào.
+        <br /><br />
+        Bản đánh giá này mang lại 3 sức mạnh cốt lõi:
+        <br /><br />
+        <strong>1. Từ Sương Mù ra Ánh Sáng (Clarity) 🗺️</strong><br />
+        Nó biến sự hỗn loạn của 100 việc phải làm thành một tấm bản đồ chiến lược rõ ràng. Bạn sẽ biết chính xác đâu là "thành trì" quan trọng nhất cần phải chiếm trong 90 ngày tới. Mọi thứ khác chỉ là thứ yếu.
+        <br /><br />
+        <strong>2. Tập Trung Hỏa Lực (Focus) 🎯</strong><br />
+        Bạn không thể dàn quân ra mọi mặt trận. Bản đánh giá này buộc bạn phải dồn toàn bộ nguồn lực (thời gian, năng lượng, tiền bạc) vào những mục tiêu tạo ra tác động lớn nhất. Thay vì bắn 100 viên đạn đi khắp nơi, bạn sẽ bắn 10 viên trúng vào tim địch.
+        <br /><br />
+        <strong>3. Giành Lại Quyền Chỉ Huy (Control) 🕹️</strong><br />
+        Nó giúp bạn chuyển từ thế bị động phản ứng với hoàn cảnh sang thế chủ động kiến tạo tương lai. Bạn sẽ lường trước được "quân địch" (thách thức), tận dụng "địa lợi" (cơ hội) và chỉ huy "quân ta" (chính bản thân/đội nhóm) một cách có chủ đích.
+        <br /><br />
+        <strong>Nói đơn giản:</strong> Bạn ngừng làm nạn nhân của hoàn cảnh và trở thành người kiến tạo nên chiến thắng của chính mình. Đó là lý do chúng ta phải làm việc này.
+        <br /><br />
+        <em>Đánh giá toàn diện hàng quý cho cả Công việc và Cuộc sống (thực hiện mỗi quý một lần)</em>
+    </p>
+    
+</div>
+
+
+
+          
           
         </div>
 
