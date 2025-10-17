@@ -131,11 +131,6 @@ const QuarterlyAssessmentSection: React.FC<QuarterlyAssessmentSectionProps> = ({
             Quarterly Battlefield Assessment
           </h2>
           
-          <p className="text-sm text-gray-400 mt-1">
-            Comprehensive quarterly assessment for both Work and Life (done once per quarter)
-          </p>
-
-
 
           <p className="text-xs text-gray-400 mt-1">
         <br />
@@ -158,7 +153,7 @@ const QuarterlyAssessmentSection: React.FC<QuarterlyAssessmentSectionProps> = ({
         <br /><br />
         Nói đơn giản: Bạn ngừng làm nạn nhân của hoàn cảnh và trở thành người kiến tạo nên chiến thắng của chính mình. Đó là lý do chúng ta phải làm việc này.
         <br /><br />
-        <em>Đánh giá toàn diện hàng quý cho cả Công việc và Cuộc sống (thực hiện mỗi quý một lần)</em>
+        <em>Đánh giá toàn diện hàng quý cho cả Công việc và Cuộc sống (thực hiện mỗi quý một lần hoặc khi nào cần thiết)</em>
     </p>
 
 
