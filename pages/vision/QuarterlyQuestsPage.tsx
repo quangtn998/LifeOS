@@ -1,26 +1,24 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../contexts/AuthContext';
-import { Quest, QuestAssessment, QuarterData } from '../../types';
+import { Quest, QuarterData } from '../../types';
 import Card from '../../components/Card';
 import { PlusCircleIcon, TrashIcon, CheckCircleIcon, EditIcon, SaveIcon, ChevronDownIcon, ChevronUpIcon } from '../../components/icons/Icons';
 import ExpandableGuide from '../../components/ExpandableGuide';
 import { GUIDE_CONTENT } from '../../constants/guideContent';
-import BattlefieldAssessment from '../../components/BattlefieldAssessment';
 import QuarterHistory from '../../components/QuarterHistory';
+import QuarterlyAssessmentSection from '../../components/QuarterlyAssessmentSection';
 import { getCurrentQuarter, isPastQuarter } from '../../utils/quarterUtils';
 
 const QuarterlyQuestsPage: React.FC = () => {
   const { user } = useAuth();
   const [quests, setQuests] = useState<Quest[]>([]);
-  const [assessments, setAssessments] = useState<Map<string, QuestAssessment>>(new Map());
   const [quarterHistory, setQuarterHistory] = useState<QuarterData[]>([]);
   const [newQuestTitle, setNewQuestTitle] = useState('');
   const [newQuestCategory, setNewQuestCategory] = useState<'work' | 'life'>('work');
   const [loading, setLoading] = useState(true);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const currentQuarter = getCurrentQuarter();
 
   const fetchQuests = useCallback(async () => {
@@ -46,37 +44,13 @@ const QuarterlyQuestsPage: React.FC = () => {
         }
       }
 
-      setQuests(currentQuarterQuests.map(q => ({...q, quarter: q.quarter || currentQuarter, editing: false, expanded: false})));
-
-      if (currentQuarterQuests.length > 0) {
-        await fetchAssessments(currentQuarterQuests.map(q => q.id));
-      }
+      setQuests(currentQuarterQuests.map(q => ({...q, quarter: q.quarter || currentQuarter, editing: false})));
     } catch (err: any) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
   }, [user, currentQuarter]);
-
-  const fetchAssessments = async (questIds: string[]) => {
-    if (!user || questIds.length === 0) return;
-    try {
-      const { data, error } = await supabase
-        .from('quest_assessments')
-        .select('*')
-        .in('quest_id', questIds)
-        .eq('user_id', user.id);
-      if (error) throw error;
-
-      const assessmentMap = new Map<string, QuestAssessment>();
-      data?.forEach(assessment => {
-        assessmentMap.set(assessment.quest_id, assessment);
-      });
-      setAssessments(assessmentMap);
-    } catch (err: any) {
-      console.error('Error fetching assessments:', err);
-    }
-  };
 
   const fetchQuarterHistory = useCallback(async () => {
     if (!user) return;
@@ -101,22 +75,13 @@ const QuarterlyQuestsPage: React.FC = () => {
 
         if (assessmentsError) throw assessmentsError;
 
-        const assessmentMap = new Map<string, QuestAssessment>();
-        assessmentsData?.forEach(assessment => {
-          assessmentMap.set(assessment.quest_id, assessment);
-        });
-
         const quarterMap = new Map<string, Quest[]>();
         questsData.forEach(quest => {
           if (quest.quarter && isPastQuarter(quest.quarter)) {
-            const questWithAssessment = {
-              ...quest,
-              assessment: assessmentMap.get(quest.id)
-            };
             if (!quarterMap.has(quest.quarter)) {
               quarterMap.set(quest.quarter, []);
             }
-            quarterMap.get(quest.quarter)!.push(questWithAssessment);
+            quarterMap.get(quest.quarter)!.push(quest);
           }
         });
 
@@ -207,8 +172,6 @@ const QuarterlyQuestsPage: React.FC = () => {
       const { error } = await supabase.from('quests').delete().eq('id', id);
       if (error) throw error;
       setQuests(quests.filter(q => q.id !== id));
-      assessments.delete(id);
-      setAssessments(new Map(assessments));
     } catch (err: any) {
       setError(err.message);
     }
@@ -222,85 +185,7 @@ const QuarterlyQuestsPage: React.FC = () => {
     setQuests(quests.map(q => q.id === id ? { ...q, title: newTitle } : q));
   };
 
-  const toggleExpanded = (id: string) => {
-    setQuests(quests.map(q => q.id === id ? { ...q, expanded: !q.expanded } : q));
-  };
 
-  const handleAssessmentChange = async (questId: string, field: keyof QuestAssessment, value: string) => {
-    if (!user) return;
-
-    const currentAssessment = assessments.get(questId);
-
-    const updatedAssessment = currentAssessment
-      ? { ...currentAssessment, [field]: value, updated_at: new Date().toISOString() }
-      : {
-          id: '',
-          quest_id: questId,
-          user_id: user.id,
-          quarter: currentQuarter,
-          [field]: value,
-          work_step1_terrain_weather: '',
-          work_step1_mission_objectives: '',
-          work_step1_strategic_plays: '',
-          work_step2_frontline_review: '',
-          work_step2_sprint_goals: '',
-          work_step2_action_plan: '',
-          work_step3_weekly_huddle: '',
-          work_step3_weekly_tasks: '',
-          work_step3_weekly_debrief: '',
-          life_step1_personal_swot: '',
-          life_step1_quarterly_mission: '',
-          life_step1_habits_projects: '',
-          life_step2_progress_review: '',
-          life_step2_monthly_milestone: '',
-          life_step2_schedule: '',
-          life_step3_self_reflection: '',
-          life_step3_big_three: '',
-          life_step3_prepare_success: '',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        };
-
-    const newAssessments = new Map(assessments);
-    newAssessments.set(questId, updatedAssessment as QuestAssessment);
-    setAssessments(newAssessments);
-
-    setSaveStatus('saving');
-
-    setTimeout(async () => {
-      try {
-        if (currentAssessment) {
-          const { error } = await supabase
-            .from('quest_assessments')
-            .update({ [field]: value, updated_at: new Date().toISOString() })
-            .eq('quest_id', questId);
-          if (error) throw error;
-        } else {
-          const { data, error } = await supabase
-            .from('quest_assessments')
-            .insert({
-              quest_id: questId,
-              user_id: user.id,
-              quarter: currentQuarter,
-              [field]: value
-            })
-            .select()
-            .single();
-          if (error) throw error;
-
-          const newMap = new Map(assessments);
-          newMap.set(questId, data);
-          setAssessments(newMap);
-        }
-        setSaveStatus('saved');
-        setTimeout(() => setSaveStatus('idle'), 2000);
-      } catch (err: any) {
-        console.error('Error saving assessment:', err);
-        setError(err.message);
-        setSaveStatus('idle');
-      }
-    }, 2000);
-  };
 
   const renderQuestList = (category: 'work' | 'life') => {
     const mainQuest = quests.find(q => q.category === category && q.type === 'main');
@@ -313,14 +198,11 @@ const QuarterlyQuestsPage: React.FC = () => {
           {mainQuest ? (
             <QuestItem
               quest={mainQuest}
-              assessment={assessments.get(mainQuest.id) || null}
               onToggle={toggleQuest}
               onDelete={deleteQuest}
               onEdit={toggleEditing}
               onTitleChange={handleTitleChange}
               onSave={updateQuestTitle}
-              onToggleExpanded={toggleExpanded}
-              onAssessmentChange={handleAssessmentChange}
               isMain
             />
           ) : (
@@ -332,14 +214,11 @@ const QuarterlyQuestsPage: React.FC = () => {
             <QuestItem
               key={quest.id}
               quest={quest}
-              assessment={assessments.get(quest.id) || null}
               onToggle={toggleQuest}
               onDelete={deleteQuest}
               onEdit={toggleEditing}
               onTitleChange={handleTitleChange}
               onSave={updateQuestTitle}
-              onToggleExpanded={toggleExpanded}
-              onAssessmentChange={handleAssessmentChange}
             />
           ))}
         </div>
@@ -364,13 +243,7 @@ const QuarterlyQuestsPage: React.FC = () => {
 
       {error && <p className="text-red-500 bg-red-500/10 p-3 rounded-md">Error: {error}</p>}
 
-      {saveStatus !== 'idle' && (
-        <div className="fixed bottom-4 right-4 bg-gray-800 border border-gray-700 rounded-md px-4 py-2 shadow-lg">
-          <p className="text-sm text-white">
-            {saveStatus === 'saving' ? 'Saving...' : 'Saved!'}
-          </p>
-        </div>
-      )}
+      <QuarterlyAssessmentSection currentQuarter={currentQuarter} />
 
       <Card>
         <form onSubmit={addQuest} className="flex flex-col gap-3 sm:flex-row">
@@ -410,27 +283,21 @@ const QuarterlyQuestsPage: React.FC = () => {
 
 interface QuestItemProps {
   quest: Quest;
-  assessment: QuestAssessment | null;
   onToggle: (id: string, completed: boolean) => void;
   onDelete: (id: string) => void;
   onEdit: (id: string) => void;
   onTitleChange: (id: string, title: string) => void;
   onSave: (id: string, title: string) => void;
-  onToggleExpanded: (id: string) => void;
-  onAssessmentChange: (questId: string, field: keyof QuestAssessment, value: string) => void;
   isMain?: boolean;
 }
 
 const QuestItem: React.FC<QuestItemProps> = ({
   quest,
-  assessment,
   onToggle,
   onDelete,
   onEdit,
   onTitleChange,
   onSave,
-  onToggleExpanded,
-  onAssessmentChange,
   isMain
 }) => (
   <div className={`rounded-md transition-colors ${isMain ? 'bg-cyan-500/10 border-2 border-cyan-500/30' : 'bg-gray-800/50 border border-gray-700'}`}>
@@ -461,17 +328,6 @@ const QuestItem: React.FC<QuestItemProps> = ({
       )}
 
       <div className="flex items-center flex-shrink-0 ml-3 space-x-2">
-        <button
-          onClick={() => onToggleExpanded(quest.id)}
-          className="text-gray-400 hover:text-cyan-400"
-          title="Toggle Assessment"
-        >
-          {quest.expanded ? (
-            <ChevronUpIcon className="w-5 h-5" />
-          ) : (
-            <ChevronDownIcon className="w-5 h-5" />
-          )}
-        </button>
         {quest.editing ? (
           <button
             onClick={() => onSave(quest.id, quest.title)}
@@ -495,16 +351,6 @@ const QuestItem: React.FC<QuestItemProps> = ({
         </button>
       </div>
     </div>
-
-    {quest.expanded && (
-      <div className="px-3 pb-3">
-        <BattlefieldAssessment
-          quest={quest}
-          assessment={assessment}
-          onAssessmentChange={(field, value) => onAssessmentChange(quest.id, field, value)}
-        />
-      </div>
-    )}
   </div>
 );
 

@@ -118,6 +118,38 @@ export interface QuarterData {
   quests: Quest[];
 }
 
+// Vision -> Quarterly Battlefield Assessment (Independent from Quests)
+export interface QuarterlyBattlefieldAssessment {
+  id: string;
+  user_id: string;
+  quarter: string;
+
+  // Work Assessment Fields
+  work_step1_terrain_weather: string;
+  work_step1_mission_objectives: string;
+  work_step1_strategic_plays: string;
+  work_step2_frontline_review: string;
+  work_step2_sprint_goals: string;
+  work_step2_action_plan: string;
+  work_step3_weekly_huddle: string;
+  work_step3_weekly_tasks: string;
+  work_step3_weekly_debrief: string;
+
+  // Life Assessment Fields
+  life_step1_personal_swot: string;
+  life_step1_quarterly_mission: string;
+  life_step1_habits_projects: string;
+  life_step2_progress_review: string;
+  life_step2_monthly_milestone: string;
+  life_step2_schedule: string;
+  life_step3_self_reflection: string;
+  life_step3_big_three: string;
+  life_step3_prepare_success: string;
+
+  created_at: string;
+  updated_at: string;
+}
+
 // Action -> Focus Timer
 export interface CustomTool {
   id: string;
