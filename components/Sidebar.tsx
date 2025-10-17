@@ -32,8 +32,8 @@ const Sidebar: React.FC = () => {
     { name: 'Future Sketch', path: '/vision/future-sketch', icon: TargetIcon },
     { name: 'Quarterly Quests', path: '/vision/quarterly-quests', icon: ZapIcon },
     { name: 'ACTION', isHeader: true },
-    { name: 'Weekly Plan', path: '/action/weekly-plan', icon: CalendarIcon },
-    { name: 'Daily Plan', path: '/action/daily-plan', icon: CheckCircleIcon },
+    { name: 'Weekly', path: '/action/weekly-plan', icon: CalendarIcon },
+    { name: 'Daily', path: '/action/daily-plan', icon: CheckCircleIcon },
     { name: 'Focus Timer', path: '/action/focus-timer', icon: ClockIcon },
   ];
   
