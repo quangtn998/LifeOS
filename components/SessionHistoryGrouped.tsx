@@ -168,46 +168,44 @@ const SessionHistoryGrouped: React.FC<SessionHistoryGroupedProps> = ({ sessions 
                     </div>
                   )}
 
-                  {(session.disruptors || session.toolkit_usage || session.recharge_usage) && (
-                    <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-4">
-                      <div>
-                        <p className="text-xs font-semibold text-red-400 mb-1">Disruptors:</p>
-                        {session.disruptors && Object.entries(session.disruptors).filter(([, val]) => val > 0).length > 0 ? (
-                          <div className="space-y-1">
-                            {Object.entries(session.disruptors).filter(([, val]) => val > 0).map(([key, val]) => (
-                              <p key={key} className="text-xs text-gray-400 capitalize">{key}: {val}</p>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="text-xs text-gray-400">None</p>
-                        )}
-                      </div>
-                      <div>
-                        <p className="text-xs font-semibold text-green-400 mb-1">Tools Used:</p>
-                        {session.toolkit_usage && Object.keys(session.toolkit_usage).length > 0 ? (
-                          <div className="space-y-1">
-                            {Object.entries(session.toolkit_usage).slice(0, 3).map(([key, val]) => (
-                              <p key={key} className="text-xs text-gray-400 truncate" title={key}>"{key}": {val}</p>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="text-xs text-gray-400">None</p>
-                        )}
-                      </div>
-                      <div>
-                        <p className="text-xs font-semibold text-cyan-400 mb-1">Recharge:</p>
-                        {session.recharge_usage && Object.keys(session.recharge_usage).length > 0 ? (
-                          <div className="space-y-1">
-                            {Object.entries(session.recharge_usage).slice(0, 3).map(([key, val]) => (
-                              <p key={key} className="text-xs text-gray-400 truncate" title={key}>"{key}": {val}</p>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="text-xs text-gray-400">None</p>
-                        )}
-                      </div>
+                  <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div>
+                      <p className="text-xs font-semibold text-red-400 mb-1">Disruptors:</p>
+                      {session.disruptors && Object.entries(session.disruptors).filter(([, val]) => val > 0).length > 0 ? (
+                        <div className="space-y-1">
+                          {Object.entries(session.disruptors).filter(([, val]) => val > 0).map(([key, val]) => (
+                            <p key={key} className="text-xs text-gray-400 capitalize">{key}: {val}</p>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-gray-400">None</p>
+                      )}
                     </div>
-                  )}
+                    <div>
+                      <p className="text-xs font-semibold text-green-400 mb-1">Tools Used:</p>
+                      {session.toolkit_usage && Object.keys(session.toolkit_usage).length > 0 ? (
+                        <div className="space-y-1">
+                          {Object.entries(session.toolkit_usage).slice(0, 3).map(([key, val]) => (
+                            <p key={key} className="text-xs text-gray-400 truncate" title={key}>"{key}": {val}</p>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-gray-400">None</p>
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-cyan-400 mb-1">Recharge:</p>
+                      {session.recharge_usage && Object.keys(session.recharge_usage).length > 0 ? (
+                        <div className="space-y-1">
+                          {Object.entries(session.recharge_usage).slice(0, 3).map(([key, val]) => (
+                            <p key={key} className="text-xs text-gray-400 truncate" title={key}>"{key}": {val}</p>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-gray-400">None</p>
+                      )}
+                    </div>
+                  </div>
                 </Card>
               );
               })}
