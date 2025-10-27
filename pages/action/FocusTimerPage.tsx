@@ -233,9 +233,9 @@ const FocusTimerPage: React.FC = () => {
             <Card className="w-full text-center">
                 <div className="flex items-center justify-center gap-3 mb-4">
                     <h2 className={`text-2xl font-bold ${phase.color}`}>{phase.name}</h2>
-                    {(currentPhase !== 'PLAN' || isActive) && (
+                    {currentPhase !== 'PLAN' && currentSessionNumber > 0 && (
                         <span className="px-3 py-1 text-sm font-bold bg-gradient-to-r from-cyan-600 to-blue-600 text-white rounded-full border-2 border-cyan-400 shadow-lg">
-                            Session #{currentSessionNumber}
+                            Today's Session #{currentSessionNumber}
                         </span>
                     )}
                 </div>
@@ -251,7 +251,7 @@ const FocusTimerPage: React.FC = () => {
                         <SkipForwardIcon className="w-6 h-6"/>
                     </button>
                 </div>
-                {(currentPhase !== 'PLAN' || isActive) && (
+                {currentPhase !== 'PLAN' && (
                     <div className="mt-6">
                         <button
                             onClick={endSession}

@@ -235,14 +235,16 @@ export const FocusTimerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setPauseStartTime(null);
     setActualDurationMinutes(0);
     setShowCompletionDialog(false);
-
-    const nextSessionNum = await getNextSessionNumber();
-    setCurrentSessionNumber(nextSessionNum);
-  }, [getNextSessionNumber]);
+    setCurrentSessionNumber(0);
+  }, []);
 
   const handlePhaseEnd = useCallback(async () => {
     if (currentPhase === 'PLAN') {
       planEndAudio.current?.play();
+
+      const nextSessionNum = await getNextSessionNumber();
+      setCurrentSessionNumber(nextSessionNum);
+
       setCurrentPhase('FOCUS');
       setSecondsLeft(PHASES.FOCUS.duration);
       setFocusStartTime(Date.now());
@@ -272,7 +274,7 @@ export const FocusTimerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       setShowCompletionDialog(true);
       setIsActive(false);
     }
-  }, [currentPhase, focusStartTime, totalPauseDuration, actualDurationMinutes, logFocusSession, saveSessionData]);
+  }, [currentPhase, focusStartTime, totalPauseDuration, actualDurationMinutes, logFocusSession, saveSessionData, getNextSessionNumber]);
 
   useEffect(() => {
     if (isActive) {
@@ -308,7 +310,10 @@ export const FocusTimerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const skipToNextPhase = useCallback(async () => {
     setIsActive(false);
-    if (currentPhase === 'FOCUS' && focusStartTime) {
+    if (currentPhase === 'PLAN') {
+      const nextSessionNum = await getNextSessionNumber();
+      setCurrentSessionNumber(nextSessionNum);
+    } else if (currentPhase === 'FOCUS' && focusStartTime) {
       const endTime = Date.now();
       const totalElapsed = (endTime - focusStartTime) / 1000;
       const timeSpentInPhase = PHASES.FOCUS.duration - secondsLeft;
@@ -317,10 +322,15 @@ export const FocusTimerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       setActualDurationMinutes(actualMinutes);
     }
     setSecondsLeft(-1);
-  }, [currentPhase, focusStartTime, secondsLeft, totalPauseDuration]);
+  }, [currentPhase, focusStartTime, secondsLeft, totalPauseDuration, getNextSessionNumber]);
 
   const endSession = useCallback(async () => {
     setIsActive(false);
+
+    if (currentPhase === 'PLAN') {
+      await resetTimer();
+      return;
+    }
 
     if (currentPhase === 'FOCUS' && focusStartTime) {
       const endTime = Date.now();
@@ -357,8 +367,6 @@ export const FocusTimerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const endTime = Date.now();
       await saveSessionData(focusStartTime, endTime, totalPauseDuration, actualDurationMinutes);
       setShowCompletionDialog(true);
-    } else {
-      await resetTimer();
     }
   }, [currentPhase, focusStartTime, totalPauseDuration, user, currentSessionNumber, sessionGoal, capturedThoughts, sessionStats, logFocusSession, resetTimer, saveSessionData, actualDurationMinutes]);
 

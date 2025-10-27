@@ -72,7 +72,7 @@ const SessionHistoryGrouped: React.FC<SessionHistoryGroupedProps> = ({ sessions 
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-xs font-semibold text-gray-500 bg-gray-700 px-2 py-1 rounded">
-                          #{session.session_number}
+                          Session #{session.session_number}
                         </span>
                         {session.completed ? (
                           <span className="text-xs font-semibold text-green-400 bg-green-900/30 px-2 py-1 rounded border border-green-500/30">
