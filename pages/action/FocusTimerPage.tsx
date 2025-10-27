@@ -6,6 +6,7 @@ import Card from '../../components/Card';
 import HistorySection from '../../components/HistorySection';
 import SessionCompletionDialog from '../../components/SessionCompletionDialog';
 import SessionHistoryGrouped from '../../components/SessionHistoryGrouped';
+import AllSessionsStats from '../../components/AllSessionsStats';
 import PlanStepIndicator from '../../components/PlanStepIndicator';
 import { PlayIcon, PauseIcon, RefreshCwIcon, PlusCircleIcon, TrashIcon, SkipForwardIcon, VolumeIcon, VolumeOffIcon, CheckIcon } from '../../components/icons/Icons';
 import { CustomTool, DailyPlan } from '../../types';
@@ -97,8 +98,11 @@ const FocusTimerPage: React.FC = () => {
     const [customTools, setCustomTools] = useState<{activation: CustomTool[], reactivation: CustomTool[]}>({activation: [], reactivation: []});
     const [customRecharge, setCustomRecharge] = useState<CustomTool[]>([]);
     const [sessionHistory, setSessionHistory] = useState<FocusSessionHistory[]>([]);
+    const [allSessions, setAllSessions] = useState<FocusSessionHistory[]>([]);
     const [historyLoading, setHistoryLoading] = useState(false);
+    const [allSessionsLoading, setAllSessionsLoading] = useState(false);
     const [showEarlyExitDialog, setShowEarlyExitDialog] = useState(false);
+    const [viewMode, setViewMode] = useState<'week' | 'all'>('week');
 
     const fetchData = useCallback(async () => {
         if (!user) return;
@@ -114,7 +118,7 @@ const FocusTimerPage: React.FC = () => {
             setCustomRecharge(rechargeData.activities || []);
         }
         const today = getTodayLocal();
-        const { data: planData } = await supabase.from('daily_plan').select('manifesto').eq('user_id', user.id).eq('date', today).single();
+        const { data: planData } = await supabase.from('daily_plan').select('manifesto').eq('user_id', user.id).eq('date', today).maybeSingle();
         if (planData) {
             setDailyAdventure((planData.manifesto as DailyPlan['manifesto'])?.adventure || null);
         }
@@ -146,10 +150,35 @@ const FocusTimerPage: React.FC = () => {
         }
     }, [user]);
 
+    const fetchAllSessions = useCallback(async () => {
+        if (!user) return;
+        setAllSessionsLoading(true);
+        try {
+            const { data, error } = await supabase
+                .from('focus_sessions')
+                .select('*')
+                .eq('user_id', user.id)
+                .order('date', { ascending: false })
+                .order('session_number', { ascending: false });
+            if (error) throw error;
+            setAllSessions(data || []);
+        } catch (err) {
+            console.error('Error fetching all sessions:', err);
+        } finally {
+            setAllSessionsLoading(false);
+        }
+    }, [user]);
+
     useEffect(() => {
         fetchData();
         fetchSessionHistory();
     }, [fetchData, fetchSessionHistory]);
+
+    useEffect(() => {
+        if (viewMode === 'all' && allSessions.length === 0) {
+            fetchAllSessions();
+        }
+    }, [viewMode, allSessions.length, fetchAllSessions]);
 
     // --- Custom Tools ---
     const addCustomTool = async (type: 'activation' | 'reactivation', text: string) => {
@@ -500,16 +529,60 @@ const FocusTimerPage: React.FC = () => {
                  </div>
             )}
 
-            <HistorySection title="This Week's Focus Sessions" isLoading={historyLoading}>
-                {sessionHistory.length === 0 ? (
-                    <p className="text-center text-gray-400 py-8">No focus sessions this week yet. Start your first session to build momentum!</p>
-                ) : (
-                    <div className="space-y-6">
-                        <WeeklyStats sessions={sessionHistory} />
-                        <SessionHistoryGrouped sessions={sessionHistory} />
+            <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <h2 className="text-2xl font-bold text-white">Focus History</h2>
+                    <div className="flex gap-2 bg-gray-800 p-1 rounded-lg">
+                        <button
+                            onClick={() => setViewMode('week')}
+                            className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                                viewMode === 'week'
+                                    ? 'bg-cyan-500 text-white'
+                                    : 'text-gray-400 hover:text-white'
+                            }`}
+                        >
+                            This Week
+                        </button>
+                        <button
+                            onClick={() => setViewMode('all')}
+                            className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                                viewMode === 'all'
+                                    ? 'bg-cyan-500 text-white'
+                                    : 'text-gray-400 hover:text-white'
+                            }`}
+                        >
+                            All Sessions
+                        </button>
                     </div>
+                </div>
+
+                {viewMode === 'week' ? (
+                    <HistorySection title="" isLoading={historyLoading}>
+                        {sessionHistory.length === 0 ? (
+                            <p className="text-center text-gray-400 py-8">No focus sessions this week yet. Start your first session to build momentum!</p>
+                        ) : (
+                            <div className="space-y-6">
+                                <WeeklyStats sessions={sessionHistory} />
+                                <SessionHistoryGrouped sessions={sessionHistory} />
+                            </div>
+                        )}
+                    </HistorySection>
+                ) : (
+                    <HistorySection title="" isLoading={allSessionsLoading}>
+                        {allSessions.length === 0 ? (
+                            <p className="text-center text-gray-400 py-8">No focus sessions yet. Complete your first session to see your progress!</p>
+                        ) : (
+                            <div className="space-y-6">
+                                <AllSessionsStats sessions={allSessions} />
+                                <div className="mt-6">
+                                    <h3 className="text-xl font-bold text-white mb-4">Session History</h3>
+                                    <SessionHistoryGrouped sessions={allSessions} />
+                                </div>
+                            </div>
+                        )}
+                    </HistorySection>
                 )}
-            </HistorySection>
+            </div>
         </div>
     );
 };
