@@ -193,7 +193,7 @@ export const FocusTimerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const today = getTodayLocal();
     const isEarlyExit = actualMinutes < 50;
 
-    await supabase.from('focus_sessions').insert({
+    const sessionData = {
       user_id: user.id,
       date: today,
       session_number: currentSessionNumber,
@@ -210,7 +210,28 @@ export const FocusTimerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       total_pause_duration_seconds: pauseDuration,
       completed: true,
       is_early_exit: isEarlyExit,
-    });
+    };
+
+    try {
+      console.log('[Session Save] Saving session data:', sessionData);
+
+      const { data, error } = await supabase
+        .from('focus_sessions')
+        .upsert(sessionData, {
+          onConflict: 'user_id,date,session_number'
+        })
+        .select();
+
+      if (error) {
+        console.error('[Session Save] Error upserting session:', error);
+        throw error;
+      }
+
+      console.log('[Session Save] Successfully saved session:', data);
+    } catch (err) {
+      console.error('[Session Save] Failed to save session:', err);
+      alert('Failed to save focus session. Please check your connection and try again.');
+    }
   }, [user, currentSessionNumber, sessionGoal, capturedThoughts, reflection, sessionStats]);
 
   const saveSessionGoal = useCallback(async () => {

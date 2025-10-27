@@ -106,14 +106,14 @@ const FocusTimerPage: React.FC = () => {
 
     const fetchData = useCallback(async () => {
         if (!user) return;
-        const { data: toolsData } = await supabase.from('custom_tools').select('*').eq('user_id', user.id).single();
+        const { data: toolsData } = await supabase.from('custom_tools').select('*').eq('user_id', user.id).maybeSingle();
         if (toolsData) {
             setCustomTools({
                 activation: toolsData.activation || [],
                 reactivation: toolsData.reactivation || [],
             });
         }
-        const { data: rechargeData } = await supabase.from('custom_recharge').select('*').eq('user_id', user.id).single();
+        const { data: rechargeData } = await supabase.from('custom_recharge').select('*').eq('user_id', user.id).maybeSingle();
         if (rechargeData) {
             setCustomRecharge(rechargeData.activities || []);
         }
