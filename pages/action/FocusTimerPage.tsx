@@ -33,6 +33,10 @@ interface FocusSessionHistory {
   duration_minutes: number;
   actual_duration_minutes: number;
   completed: boolean;
+  start_time?: string;
+  end_time?: string;
+  total_pause_duration_seconds?: number;
+  is_early_exit?: boolean;
 }
 
 const PHASES = {
@@ -587,29 +591,44 @@ const RechargeList: React.FC<{defaultActivities: CustomTool[], customActivities:
 
 const WeeklyStats: React.FC<{sessions: FocusSessionHistory[]}> = ({ sessions }) => {
     const completedSessions = sessions.filter(s => s.completed);
-    const incompleteSessions = sessions.filter(s => !s.completed);
+    const earlyExitSessions = completedSessions.filter(s => s.is_early_exit);
     const totalMinutes = completedSessions.reduce((sum, s) => sum + (s.actual_duration_minutes || s.duration_minutes || 0), 0);
     const totalHours = Math.floor(totalMinutes / 60);
     const remainingMinutes = totalMinutes % 60;
     const completionRate = sessions.length > 0 ? Math.round((completedSessions.length / sessions.length) * 100) : 0;
+    const avgDuration = completedSessions.length > 0
+        ? Math.round(totalMinutes / completedSessions.length)
+        : 0;
+    const totalPauseTime = completedSessions.reduce((sum, s) => sum + (s.total_pause_duration_seconds || 0), 0);
+    const totalPauseMinutes = Math.floor(totalPauseTime / 60);
 
     return (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
-                <p className="text-xs text-gray-400 mb-1">Total Sessions</p>
-                <p className="text-2xl font-bold text-white">{sessions.length}</p>
-            </div>
-            <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
-                <p className="text-xs text-gray-400 mb-1">Completed</p>
-                <p className="text-2xl font-bold text-green-400">{completedSessions.length}</p>
-            </div>
-            <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
-                <p className="text-xs text-gray-400 mb-1">Focus Time</p>
-                <p className="text-2xl font-bold text-cyan-400">{totalHours}h {remainingMinutes}m</p>
-            </div>
-            <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
-                <p className="text-xs text-gray-400 mb-1">Completion Rate</p>
-                <p className="text-2xl font-bold text-yellow-400">{completionRate}%</p>
+        <div className="space-y-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+                    <p className="text-xs text-gray-400 mb-1">Total Sessions</p>
+                    <p className="text-2xl font-bold text-white">{sessions.length}</p>
+                    <p className="text-xs text-gray-500 mt-1">{completedSessions.length} completed</p>
+                </div>
+                <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+                    <p className="text-xs text-gray-400 mb-1">Focus Time</p>
+                    <p className="text-2xl font-bold text-cyan-400">{totalHours}h {remainingMinutes}m</p>
+                    <p className="text-xs text-gray-500 mt-1">Avg: {avgDuration} min</p>
+                </div>
+                <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+                    <p className="text-xs text-gray-400 mb-1">Completion Rate</p>
+                    <p className="text-2xl font-bold text-green-400">{completionRate}%</p>
+                    {earlyExitSessions.length > 0 && (
+                        <p className="text-xs text-orange-400 mt-1">{earlyExitSessions.length} early exit{earlyExitSessions.length > 1 ? 's' : ''}</p>
+                    )}
+                </div>
+                <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+                    <p className="text-xs text-gray-400 mb-1">Total Paused</p>
+                    <p className="text-2xl font-bold text-yellow-400">{totalPauseMinutes}m</p>
+                    {completedSessions.length > 0 && (
+                        <p className="text-xs text-gray-500 mt-1">Avg: {Math.round(totalPauseMinutes / completedSessions.length)}m/session</p>
+                    )}
+                </div>
             </div>
         </div>
     );

@@ -1,5 +1,6 @@
 import React from 'react';
 import Card from './Card';
+import { ClockIcon } from './icons/Icons';
 
 interface FocusSessionHistory {
   id: string;
@@ -19,6 +20,10 @@ interface FocusSessionHistory {
   duration_minutes: number;
   actual_duration_minutes: number;
   completed: boolean;
+  start_time?: string;
+  end_time?: string;
+  total_pause_duration_seconds?: number;
+  is_early_exit?: boolean;
 }
 
 interface SessionHistoryGroupedProps {
@@ -62,44 +67,92 @@ const SessionHistoryGrouped: React.FC<SessionHistoryGroupedProps> = ({ sessions 
             </div>
 
             <div className="space-y-3 pl-4">
-              {daySessions.map((session, index) => (
-                <Card key={session.id} className={`${
-                  session.completed
-                    ? 'bg-gray-800/30 border-l-4 border-green-500/50'
-                    : 'bg-gray-800/20 border-l-4 border-yellow-500/50 opacity-75'
-                }`}>
-                  <div className="flex justify-between items-start mb-2">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-semibold text-gray-500 bg-gray-700 px-2 py-1 rounded">
-                          Session #{session.session_number}
-                        </span>
-                        {session.completed ? (
-                          <span className="text-xs font-semibold text-green-400 bg-green-900/30 px-2 py-1 rounded border border-green-500/30">
-                            Completed
+              {daySessions.map((session, index) => {
+                const pauseMinutes = session.total_pause_duration_seconds ? Math.floor(session.total_pause_duration_seconds / 60) : 0;
+                const pauseSeconds = session.total_pause_duration_seconds ? session.total_pause_duration_seconds % 60 : 0;
+                const actualFocusTime = session.actual_duration_minutes && session.total_pause_duration_seconds
+                  ? session.actual_duration_minutes - pauseMinutes
+                  : session.actual_duration_minutes;
+
+                let borderColorClass = 'border-gray-600/50';
+                if (session.completed) {
+                  if (session.is_early_exit) {
+                    borderColorClass = 'border-orange-500/50';
+                  } else {
+                    borderColorClass = 'border-green-500/50';
+                  }
+                } else {
+                  borderColorClass = 'border-yellow-500/50';
+                }
+
+                return (
+                  <Card key={session.id} className={`bg-gray-800/30 border-l-4 ${borderColorClass}`}>
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex-1">
+                        <div className="flex flex-wrap items-center gap-2 mb-2">
+                          <span className="text-xs font-semibold text-gray-300 bg-gray-700 px-2 py-1 rounded">
+                            Session #{session.session_number}
                           </span>
-                        ) : (
-                          <span className="text-xs font-semibold text-yellow-400 bg-yellow-900/30 px-2 py-1 rounded border border-yellow-500/30">
-                            Incomplete
-                          </span>
-                        )}
-                        <span className="text-xs text-gray-500 bg-gray-700 px-2 py-1 rounded">
-                          {session.actual_duration_minutes || session.duration_minutes || 50} min
-                        </span>
-                        {session.completed && session.actual_duration_minutes && session.actual_duration_minutes < (session.duration_minutes || 50) && (
-                          <span className="text-xs text-yellow-400">
-                            {Math.round((session.actual_duration_minutes / (session.duration_minutes || 50)) * 100)}%
-                          </span>
-                        )}
-                        {session.start_time && (
-                          <span className="text-xs text-gray-500">
-                            {new Date(session.start_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
-                          </span>
+                          {session.completed ? (
+                            session.is_early_exit ? (
+                              <span className="text-xs font-semibold text-orange-400 bg-orange-900/30 px-2 py-1 rounded border border-orange-500/30 flex items-center gap-1">
+                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                </svg>
+                                Early Exit
+                              </span>
+                            ) : (
+                              <span className="text-xs font-semibold text-green-400 bg-green-900/30 px-2 py-1 rounded border border-green-500/30 flex items-center gap-1">
+                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                </svg>
+                                Completed
+                              </span>
+                            )
+                          ) : (
+                            <span className="text-xs font-semibold text-yellow-400 bg-yellow-900/30 px-2 py-1 rounded border border-yellow-500/30">
+                              Incomplete
+                            </span>
+                          )}
+
+                          {session.start_time && session.end_time && (
+                            <span className="text-xs text-gray-400 bg-gray-700/50 px-2 py-1 rounded flex items-center gap-1">
+                              <ClockIcon className="w-3 h-3" />
+                              {new Date(session.start_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                              {' → '}
+                              {new Date(session.end_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          )}
+                        </div>
+                        <h4 className="text-base font-semibold text-cyan-400 mb-2">{session.goal || 'No goal set'}</h4>
+
+                        {session.completed && (
+                          <div className="flex flex-wrap gap-3 text-xs">
+                            <div className="flex items-center gap-1 text-gray-400">
+                              <span className="font-semibold text-cyan-400">Focus Time:</span>
+                              <span className="font-mono">{session.actual_duration_minutes || session.duration_minutes || 50} min</span>
+                            </div>
+
+                            {session.total_pause_duration_seconds !== undefined && session.total_pause_duration_seconds > 0 && (
+                              <div className="flex items-center gap-1 text-gray-400">
+                                <svg className="w-3 h-3 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                                </svg>
+                                <span className="font-semibold text-yellow-400">Paused:</span>
+                                <span className="font-mono">{pauseMinutes}m {pauseSeconds}s</span>
+                              </div>
+                            )}
+
+                            {session.is_early_exit && session.duration_minutes && (
+                              <div className="flex items-center gap-1 text-orange-400">
+                                <span className="font-semibold">Completion:</span>
+                                <span className="font-mono">{Math.round((session.actual_duration_minutes / session.duration_minutes) * 100)}%</span>
+                              </div>
+                            )}
+                          </div>
                         )}
                       </div>
-                      <h4 className="text-base font-semibold text-cyan-400">{session.goal || 'No goal set'}</h4>
                     </div>
-                  </div>
 
                   {!session.completed && (
                     <div className="mt-3 p-3 bg-yellow-900/20 rounded-md border border-yellow-500/20">
@@ -162,7 +215,8 @@ const SessionHistoryGrouped: React.FC<SessionHistoryGroupedProps> = ({ sessions 
                     </div>
                   )}
                 </Card>
-              ))}
+              );
+              })}
             </div>
           </div>
         );
