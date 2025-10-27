@@ -10,19 +10,12 @@ import { useAutoSave } from '../../hooks/useAutoSave';
 import ExpandableGuide from '../../components/ExpandableGuide';
 import { GUIDE_CONTENT } from '../../constants/guideContent';
 import AutoResizeTextarea from '../../components/AutoResizeTextarea';
-
-const getStartOfWeek = (date: Date) => {
-    const d = new Date(date);
-    d.setHours(0, 0, 0, 0);
-    const day = d.getDay();
-    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
-    return new Date(d.setDate(diff));
-};
+import { getStartOfWeek, formatDateLocal } from '../../utils/dateUtils';
 
 const WeeklyPlanPage: React.FC = () => {
     const { user } = useAuth();
-    const [weekStartDate, setWeekStartDate] = useState(getStartOfWeek(new Date()));
-    const weekKey = weekStartDate.toISOString().split('T')[0];
+    const [weekStartDate, setWeekStartDate] = useState(getStartOfWeek());
+    const weekKey = formatDateLocal(weekStartDate);
     const [review, setReview] = useState<WeeklyReviewData>({ week_start_date: weekKey, wins: '', challenges: '', nextWeekPriorities: [], quests_status: '', plan_adjustments: ''});
     const [googleCalendarUrl, setGoogleCalendarUrl] = useState('');
     const [loading, setLoading] = useState(true);
@@ -37,7 +30,7 @@ const WeeklyPlanPage: React.FC = () => {
     const fetchData = useCallback(async () => {
         if (!user) return;
         setLoading(true);
-        const startDateStr = weekStartDate.toISOString().split('T')[0];
+        const startDateStr = formatDateLocal(weekStartDate);
 
         // Fetch weekly review
         const { data: reviewData } = await supabase.from('weekly_review').select('*').eq('user_id', user.id).eq('week_start_date', startDateStr).maybeSingle();
@@ -65,7 +58,7 @@ const WeeklyPlanPage: React.FC = () => {
         if (!user) return;
         setHistoryLoading(true);
         try {
-            const currentWeekStart = weekStartDate.toISOString().split('T')[0];
+            const currentWeekStart = formatDateLocal(weekStartDate);
             const { data, error } = await supabase
                 .from('weekly_review')
                 .select('*')
@@ -228,7 +221,7 @@ const WeeklyPlanPage: React.FC = () => {
                     To get the embed URL: Go to Google Calendar → Settings → Select your calendar → Integrate calendar → Copy the iframe src URL (the part inside src="...").
                   </p>
                 </div>
-                {googleCalendarUrl && (
+                {googleCalendarUrl && googleCalendarUrl.includes('calendar.google.com') && (
                   <div className="mt-4 w-full h-[500px] md:h-[700px] lg:h-[800px]">
                     <iframe
                       src={googleCalendarUrl}
@@ -239,6 +232,11 @@ const WeeklyPlanPage: React.FC = () => {
                       scrolling="no"
                       className="rounded-md"
                     />
+                  </div>
+                )}
+                {googleCalendarUrl && !googleCalendarUrl.includes('calendar.google.com') && (
+                  <div className="mt-4 p-8 bg-red-900/20 border border-red-500/30 rounded-md text-center text-red-400">
+                    <p>Invalid Google Calendar URL. Please make sure you are using the correct embed URL from Google Calendar.</p>
                   </div>
                 )}
                 {!googleCalendarUrl && (

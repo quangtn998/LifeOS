@@ -36,11 +36,14 @@ const QuarterlyQuestsPage: React.FC = () => {
 
       const questsToUpdate = data?.filter(q => !q.quarter || q.quarter === '') || [];
       if (questsToUpdate.length > 0) {
-        for (const quest of questsToUpdate) {
-          await supabase
-            .from('quests')
-            .update({ quarter: currentQuarter })
-            .eq('id', quest.id);
+        const questIds = questsToUpdate.map(q => q.id);
+        const { error: updateError } = await supabase
+          .from('quests')
+          .update({ quarter: currentQuarter })
+          .in('id', questIds);
+
+        if (updateError) {
+          console.error('Error updating quest quarters:', updateError);
         }
       }
 

@@ -12,6 +12,7 @@ import { v4 as uuidv4 } from 'uuid';
 import ExpandableGuide from '../../components/ExpandableGuide';
 import { GUIDE_CONTENT } from '../../constants/guideContent';
 import AutoResizeTextarea from '../../components/AutoResizeTextarea';
+import { getTodayLocal, getWeekRange } from '../../utils/dateUtils';
 
 interface FocusSessionHistory {
   id: string;
@@ -100,7 +101,7 @@ const FocusTimerPage: React.FC = () => {
         if (rechargeData) {
             setCustomRecharge(rechargeData.activities || []);
         }
-        const today = new Date().toISOString().split('T')[0];
+        const today = getTodayLocal();
         const { data: planData } = await supabase.from('daily_plan').select('manifesto').eq('user_id', user.id).eq('date', today).single();
         if (planData) {
             setDailyAdventure((planData.manifesto as DailyPlan['manifesto'])?.adventure || null);
@@ -110,25 +111,6 @@ const FocusTimerPage: React.FC = () => {
             setSessionGoal(sessionData.goal);
         }
     }, [user, setSessionGoal]);
-
-    const getWeekRange = () => {
-        const today = new Date();
-        const dayOfWeek = today.getDay();
-        const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-
-        const monday = new Date(today);
-        monday.setDate(today.getDate() + mondayOffset);
-        monday.setHours(0, 0, 0, 0);
-
-        const sunday = new Date(monday);
-        sunday.setDate(monday.getDate() + 6);
-        sunday.setHours(23, 59, 59, 999);
-
-        return {
-            start: monday.toISOString().split('T')[0],
-            end: sunday.toISOString().split('T')[0]
-        };
-    };
 
     const fetchSessionHistory = useCallback(async () => {
         if (!user) return;

@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useRef, useCallb
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from './AuthContext';
 import { FocusSessionStats, FocusLogData } from '../types';
+import { getTodayLocal } from '../utils/dateUtils';
 
 const PHASES = {
   PLAN: { name: 'PLAN & ORGANIZE', duration: 5 * 60, color: 'text-yellow-400' },
@@ -36,7 +37,7 @@ interface FocusTimerContextType {
   trackToolUsage: (toolText: string) => void;
   trackRechargeUsage: (activityText: string) => void;
   formatTime: (seconds: number) => string;
-  handleSessionComplete: (startNew: boolean) => void;
+  handleSessionComplete: (startNew: boolean, onHistoryRefresh?: () => void) => void;
 }
 
 const FocusTimerContext = createContext<FocusTimerContextType | undefined>(undefined);
@@ -77,9 +78,14 @@ export const FocusTimerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const planEndAudio = useRef<HTMLAudioElement | null>(null);
   const focusEndAudio = useRef<HTMLAudioElement | null>(null);
   const reflectEndAudio = useRef<HTMLAudioElement | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const pendingTimeoutsRef = useRef<Set<NodeJS.Timeout>>(new Set());
 
   useEffect(() => {
+    if (!soundEnabled) return;
+
     const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    audioContextRef.current = audioContext;
 
     const createBeep = (frequency: number, duration: number, volume: number = 0.3) => {
       const oscillator = audioContext.createOscillator();
@@ -101,11 +107,13 @@ export const FocusTimerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       return () => {
         if (!soundEnabled) return;
         beeps.forEach(({freq, delay, duration}) => {
-          setTimeout(() => {
+          const timeout = setTimeout(() => {
             const {oscillator} = createBeep(freq, duration);
             oscillator.start(audioContext.currentTime);
             oscillator.stop(audioContext.currentTime + duration);
+            pendingTimeoutsRef.current.delete(timeout);
           }, delay);
+          pendingTimeoutsRef.current.add(timeout);
         });
       };
     };
@@ -131,11 +139,20 @@ export const FocusTimerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         {freq: 523, delay: 200, duration: 0.3}
       ])
     } as any;
+
+    return () => {
+      pendingTimeoutsRef.current.forEach(timeout => clearTimeout(timeout));
+      pendingTimeoutsRef.current.clear();
+
+      if (audioContext.state !== 'closed') {
+        audioContext.close().catch(err => console.error('Error closing audio context:', err));
+      }
+    };
   }, [soundEnabled]);
 
   const logFocusSession = useCallback(async (duration: number) => {
     if (!user) return;
-    const today = new Date().toISOString().split('T')[0];
+    const today = getTodayLocal();
 
     const { data: log, error: fetchError } = await supabase.from('focus_log').select('data').eq('user_id', user.id).maybeSingle();
     if(fetchError && fetchError.code !== 'PGRST116') console.error(fetchError);
@@ -149,7 +166,7 @@ export const FocusTimerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const getNextSessionNumber = useCallback(async () => {
     if (!user) return 1;
-    const today = new Date().toISOString().split('T')[0];
+    const today = getTodayLocal();
 
     const { data } = await supabase
       .from('focus_sessions')
@@ -165,7 +182,7 @@ export const FocusTimerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const saveSessionData = useCallback(async (startTime: number | null, endTime: number, pauseDuration: number, actualMinutes: number) => {
     if (!user) return;
-    const today = new Date().toISOString().split('T')[0];
+    const today = getTodayLocal();
 
     await supabase.from('focus_sessions').insert({
       user_id: user.id,
@@ -188,7 +205,7 @@ export const FocusTimerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const saveSessionGoal = useCallback(async () => {
     if (!user || !sessionGoal.trim()) return;
-    const today = new Date().toISOString().split('T')[0];
+    const today = getTodayLocal();
 
     const { data: existingSession } = await supabase
       .from('focus_sessions')
@@ -295,15 +312,19 @@ export const FocusTimerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const toggleTimer = useCallback(() => {
     if (currentPhase === 'FOCUS') {
-      if (isActive) {
-        setPauseStartTime(Date.now());
-      } else {
-        if (pauseStartTime) {
-          const pauseDuration = (Date.now() - pauseStartTime) / 1000;
-          setTotalPauseDuration(prev => prev + pauseDuration);
-          setPauseStartTime(null);
+      setTotalPauseDuration(prev => {
+        if (isActive) {
+          setPauseStartTime(Date.now());
+          return prev;
+        } else {
+          if (pauseStartTime) {
+            const pauseDuration = (Date.now() - pauseStartTime) / 1000;
+            setPauseStartTime(null);
+            return prev + pauseDuration;
+          }
+          return prev;
         }
-      }
+      });
     }
     setIsActive(!isActive);
   }, [isActive, currentPhase, pauseStartTime]);
@@ -342,25 +363,35 @@ export const FocusTimerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       await logFocusSession(actualMinutes);
 
       if (!user) return;
-      const today = new Date().toISOString().split('T')[0];
+      const today = getTodayLocal();
 
-      await supabase.from('focus_sessions').insert({
-        user_id: user.id,
-        date: today,
-        session_number: currentSessionNumber,
-        goal: sessionGoal,
-        captured_thoughts: capturedThoughts,
-        reflection: '',
-        disruptors: sessionStats.disruptors,
-        toolkit_usage: sessionStats.toolkit,
-        recharge_usage: {},
-        duration_minutes: PHASES.FOCUS.duration / 60,
-        start_time: new Date(focusStartTime).toISOString(),
-        end_time: new Date(endTime).toISOString(),
-        actual_duration_minutes: actualMinutes,
-        total_pause_duration_seconds: totalPauseDuration,
-        completed: false,
-      });
+      try {
+        const { error } = await supabase.from('focus_sessions').insert({
+          user_id: user.id,
+          date: today,
+          session_number: currentSessionNumber,
+          goal: sessionGoal,
+          captured_thoughts: capturedThoughts,
+          reflection: '',
+          disruptors: sessionStats.disruptors,
+          toolkit_usage: sessionStats.toolkit,
+          recharge_usage: {},
+          duration_minutes: PHASES.FOCUS.duration / 60,
+          start_time: new Date(focusStartTime).toISOString(),
+          end_time: new Date(endTime).toISOString(),
+          actual_duration_minutes: actualMinutes,
+          total_pause_duration_seconds: totalPauseDuration,
+          completed: false,
+        });
+
+        if (error) {
+          console.error('Failed to save session data:', error);
+          alert('Warning: Session data could not be saved to the database. Your focus time was still logged.');
+        }
+      } catch (err) {
+        console.error('Error during session save:', err);
+        alert('Warning: An error occurred while saving your session. Your focus time was still logged.');
+      }
 
       await resetTimer();
     } else if (currentPhase === 'REFLECT') {

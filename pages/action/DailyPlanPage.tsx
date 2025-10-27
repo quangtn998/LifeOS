@@ -10,13 +10,12 @@ import { useAutoSave } from '../../hooks/useAutoSave';
 import ExpandableGuide from '../../components/ExpandableGuide';
 import { GUIDE_CONTENT } from '../../constants/guideContent';
 import AutoResizeTextarea from '../../components/AutoResizeTextarea';
-
-const getToday = () => new Date().toISOString().split('T')[0];
+import { getTodayLocal, getStartOfWeek, formatDateLocal } from '../../utils/dateUtils';
 
 const DailyPlanPage: React.FC = () => {
     const { user } = useAuth();
     const [plan, setPlan] = useState<DailyPlan>({
-        date: getToday(),
+        date: getTodayLocal(),
         manifesto: { feeling: '', gratitude: '', adventure: '' },
         tasks: [],
         shutdown: { accomplished: '', learned: '', tomorrow: '' }
@@ -35,7 +34,7 @@ const DailyPlanPage: React.FC = () => {
     const fetchData = useCallback(async () => {
         if (!user) return;
         setLoading(true);
-        const today = getToday();
+        const today = getTodayLocal();
 
         // Fetch today's plan
         const { data, error } = await supabase
@@ -47,9 +46,9 @@ const DailyPlanPage: React.FC = () => {
 
         const loadedData = data || { date: today, manifesto: { feeling: '', gratitude: '', adventure: '' }, tasks: [], shutdown: { accomplished: '', learned: '', tomorrow: '' } };
         setPlan(loadedData);
-        
+
         // Fetch weekly priorities for Golden Thread
-        const weekStartDate = getStartOfWeek(new Date()).toISOString().split('T')[0];
+        const weekStartDate = formatDateLocal(getStartOfWeek());
         const { data: reviewData } = await supabase.from('weekly_review').select('nextweekpriorities').eq('user_id', user.id).eq('week_start_date', weekStartDate).maybeSingle();
         if(reviewData) {
             setWeeklyPriorities(reviewData.nextweekpriorities || []);
@@ -62,7 +61,7 @@ const DailyPlanPage: React.FC = () => {
         if (!user) return;
         setHistoryLoading(true);
         try {
-            const today = getToday();
+            const today = getTodayLocal();
             const { data, error } = await supabase
                 .from('daily_plan')
                 .select('*')
@@ -269,14 +268,5 @@ const DailyPlanPage: React.FC = () => {
         </div>
     );
 };
-
-const getStartOfWeek = (date: Date) => {
-    const d = new Date(date);
-    d.setHours(0, 0, 0, 0);
-    const day = d.getDay();
-    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
-    return new Date(d.setDate(diff));
-}
-
 
 export default DailyPlanPage;

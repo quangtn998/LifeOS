@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabaseClient';
 import { Quest, FocusLogData } from '../types';
 import { ZapIcon, ClockIcon } from '../components/icons/Icons';
 import FocusHeatmap from '../components/FocusHeatmap';
+import { formatDateLocal } from '../utils/dateUtils';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
@@ -46,7 +47,7 @@ const Dashboard: React.FC = () => {
   const last7Days = Array.from({ length: 7 }, (_, i) => {
       const d = new Date(today);
       d.setDate(d.getDate() - i);
-      return d.toISOString().split('T')[0];
+      return formatDateLocal(d);
   }).reverse();
 
   const focusChartData = last7Days.map(date => ({
