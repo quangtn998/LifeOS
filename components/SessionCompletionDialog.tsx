@@ -26,7 +26,14 @@ const SessionCompletionDialog: React.FC<SessionCompletionDialogProps> = ({
   const totalDisruptors = Object.values(sessionStats.disruptors).reduce((sum, val) => sum + val, 0);
   const totalTools = Object.values(sessionStats.toolkit).reduce((sum, val) => sum + val, 0);
 
+  const isEarlyExit = actualDuration < plannedDuration;
+
   const getMessage = () => {
+    if (isEarlyExit) {
+      if (actualDuration >= 30) return "Good session! You focused for a solid amount of time.";
+      if (actualDuration >= 15) return "Every minute counts. You're building the habit!";
+      return "You started! That's what matters. Keep practicing.";
+    }
     if (completionPercentage >= 90) return "Outstanding! You stayed fully focused.";
     if (completionPercentage >= 75) return "Great work! You maintained solid focus.";
     if (completionPercentage >= 50) return "Good effort! Keep building that focus muscle.";
@@ -37,12 +44,27 @@ const SessionCompletionDialog: React.FC<SessionCompletionDialogProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
       <div className="w-full max-w-lg p-8 mx-4 space-y-6 bg-gray-800 border border-gray-700 rounded-2xl shadow-2xl">
         <div className="text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 mb-4 bg-green-500/20 rounded-full">
-            <svg className="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
+          <div className={`inline-flex items-center justify-center w-16 h-16 mb-4 rounded-full ${
+            isEarlyExit ? 'bg-yellow-500/20' : 'bg-green-500/20'
+          }`}>
+            {isEarlyExit ? (
+              <svg className="w-8 h-8 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            ) : (
+              <svg className="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            )}
           </div>
-          <h2 className="text-2xl font-bold text-white">Focus Session Complete!</h2>
+          <h2 className="text-2xl font-bold text-white">
+            {isEarlyExit ? 'Session Completed' : 'Focus Session Complete!'}
+          </h2>
+          {isEarlyExit && (
+            <span className="inline-block px-3 py-1 mt-2 text-xs font-semibold bg-yellow-600/30 text-yellow-400 rounded-full border border-yellow-500/30">
+              Early Exit
+            </span>
+          )}
           <p className="mt-2 text-cyan-400">{getMessage()}</p>
         </div>
 
@@ -53,14 +75,26 @@ const SessionCompletionDialog: React.FC<SessionCompletionDialogProps> = ({
           </div>
           <div className="flex justify-between">
             <span className="text-gray-400">Time Focused:</span>
-            <span className="font-semibold text-cyan-400">{actualDuration} min / {plannedDuration} min</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-400">Completion:</span>
-            <span className={`font-semibold ${completionPercentage >= 75 ? 'text-green-400' : completionPercentage >= 50 ? 'text-yellow-400' : 'text-red-400'}`}>
-              {completionPercentage}%
+            <span className={`font-semibold ${
+              isEarlyExit ? 'text-yellow-400' : 'text-cyan-400'
+            }`}>
+              {actualDuration} min {isEarlyExit && `/ ${plannedDuration} min`}
             </span>
           </div>
+          {!isEarlyExit && (
+            <div className="flex justify-between">
+              <span className="text-gray-400">Completion:</span>
+              <span className={`font-semibold ${completionPercentage >= 75 ? 'text-green-400' : completionPercentage >= 50 ? 'text-yellow-400' : 'text-red-400'}`}>
+                {completionPercentage}%
+              </span>
+            </div>
+          )}
+          {isEarlyExit && (
+            <div className="flex justify-between">
+              <span className="text-gray-400">Session Type:</span>
+              <span className="font-semibold text-yellow-400">Ended Early</span>
+            </div>
+          )}
           {totalDisruptors > 0 && (
             <div className="flex justify-between">
               <span className="text-gray-400">Disruptors:</span>
@@ -76,6 +110,13 @@ const SessionCompletionDialog: React.FC<SessionCompletionDialogProps> = ({
         </div>
 
         <div className="pt-4 space-y-3">
+          {isEarlyExit && (
+            <div className="p-3 mb-2 bg-yellow-900/20 border border-yellow-600/30 rounded-lg">
+              <p className="text-xs text-yellow-400 text-center">
+                Tip: Try to complete the full 50 minutes next time for maximum focus benefits!
+              </p>
+            </div>
+          )}
           <button
             onClick={onStartNew}
             className="w-full px-6 py-3 font-semibold text-white transition-colors bg-cyan-500 rounded-lg hover:bg-cyan-600"

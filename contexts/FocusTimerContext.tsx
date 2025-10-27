@@ -14,6 +14,7 @@ interface FocusTimerContextType {
   secondsLeft: number;
   isActive: boolean;
   currentPhase: 'PLAN' | 'FOCUS' | 'REFLECT';
+  planStep: 1 | 2;
   sessionGoal: string;
   sessionStats: FocusSessionStats;
   capturedThoughts: string;
@@ -23,12 +24,17 @@ interface FocusTimerContextType {
   actualDurationMinutes: number;
   currentSessionNumber: number;
   soundEnabled: boolean;
+  workspaceOrganized: boolean;
+  focusStartTime: number | null;
+  totalPauseDuration: number;
 
   setSessionGoal: (goal: string) => void;
   setCapturedThoughts: (thoughts: string) => void;
   setReflection: (reflection: string) => void;
   setSessionStats: React.Dispatch<React.SetStateAction<FocusSessionStats>>;
   setSoundEnabled: (enabled: boolean) => void;
+  setWorkspaceOrganized: (organized: boolean) => void;
+  setPlanStep: (step: 1 | 2) => void;
   toggleTimer: () => void;
   resetTimer: () => void;
   skipToNextPhase: () => void;
@@ -55,9 +61,11 @@ export const FocusTimerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [secondsLeft, setSecondsLeft] = useState(PHASES.PLAN.duration);
   const [isActive, setIsActive] = useState(false);
   const [currentPhase, setCurrentPhase] = useState<'PLAN' | 'FOCUS' | 'REFLECT'>('PLAN');
+  const [planStep, setPlanStep] = useState<1 | 2>(1);
   const [sessionGoal, setSessionGoal] = useState('');
   const [capturedThoughts, setCapturedThoughts] = useState('');
   const [reflection, setReflection] = useState('');
+  const [workspaceOrganized, setWorkspaceOrganized] = useState(false);
   const [sessionStats, setSessionStats] = useState<FocusSessionStats>({
     disruptors: { procrastination: 0, distraction: 0, burnout: 0, perfectionism: 0 },
     toolkit: {},
@@ -183,6 +191,7 @@ export const FocusTimerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const saveSessionData = useCallback(async (startTime: number | null, endTime: number, pauseDuration: number, actualMinutes: number) => {
     if (!user) return;
     const today = getTodayLocal();
+    const isEarlyExit = actualMinutes < 50;
 
     await supabase.from('focus_sessions').insert({
       user_id: user.id,
@@ -200,6 +209,7 @@ export const FocusTimerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       actual_duration_minutes: actualMinutes,
       total_pause_duration_seconds: pauseDuration,
       completed: true,
+      is_early_exit: isEarlyExit,
     });
   }, [user, currentSessionNumber, sessionGoal, capturedThoughts, reflection, sessionStats]);
 
@@ -242,10 +252,12 @@ export const FocusTimerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const resetTimer = useCallback(async () => {
     setIsActive(false);
     setCurrentPhase('PLAN');
+    setPlanStep(1);
     setSecondsLeft(PHASES.PLAN.duration);
     setSessionGoal('');
     setCapturedThoughts('');
     setReflection('');
+    setWorkspaceOrganized(false);
     setSessionStats({ disruptors: { procrastination: 0, distraction: 0, burnout: 0, perfectionism: 0 }, toolkit: {}, recharge: {} });
     setFocusStartTime(null);
     setTotalPauseDuration(0);
@@ -362,44 +374,21 @@ export const FocusTimerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       setActualDurationMinutes(actualMinutes);
       await logFocusSession(actualMinutes);
 
-      if (!user) return;
-      const today = getTodayLocal();
+      setCurrentPhase('REFLECT');
+      setSecondsLeft(PHASES.REFLECT.duration);
+      setIsActive(false);
+      return;
+    }
 
-      try {
-        const { error } = await supabase.from('focus_sessions').insert({
-          user_id: user.id,
-          date: today,
-          session_number: currentSessionNumber,
-          goal: sessionGoal,
-          captured_thoughts: capturedThoughts,
-          reflection: '',
-          disruptors: sessionStats.disruptors,
-          toolkit_usage: sessionStats.toolkit,
-          recharge_usage: {},
-          duration_minutes: PHASES.FOCUS.duration / 60,
-          start_time: new Date(focusStartTime).toISOString(),
-          end_time: new Date(endTime).toISOString(),
-          actual_duration_minutes: actualMinutes,
-          total_pause_duration_seconds: totalPauseDuration,
-          completed: false,
-        });
-
-        if (error) {
-          console.error('Failed to save session data:', error);
-          alert('Warning: Session data could not be saved to the database. Your focus time was still logged.');
-        }
-      } catch (err) {
-        console.error('Error during session save:', err);
-        alert('Warning: An error occurred while saving your session. Your focus time was still logged.');
+    if (currentPhase === 'REFLECT') {
+      if (!reflection.trim()) {
+        return;
       }
-
-      await resetTimer();
-    } else if (currentPhase === 'REFLECT') {
       const endTime = Date.now();
       await saveSessionData(focusStartTime, endTime, totalPauseDuration, actualDurationMinutes);
       setShowCompletionDialog(true);
     }
-  }, [currentPhase, focusStartTime, totalPauseDuration, user, currentSessionNumber, sessionGoal, capturedThoughts, sessionStats, logFocusSession, resetTimer, saveSessionData, actualDurationMinutes]);
+  }, [currentPhase, focusStartTime, totalPauseDuration, reflection, logFocusSession, saveSessionData, actualDurationMinutes, resetTimer]);
 
   const trackDisruptor = useCallback(async (disruptor: keyof FocusSessionStats['disruptors']) => {
     setSessionStats(s => ({ ...s, disruptors: {...s.disruptors, [disruptor]: s.disruptors[disruptor] + 1 }}));
@@ -443,6 +432,7 @@ export const FocusTimerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       secondsLeft,
       isActive,
       currentPhase,
+      planStep,
       sessionGoal,
       sessionStats,
       capturedThoughts,
@@ -452,11 +442,16 @@ export const FocusTimerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       actualDurationMinutes,
       currentSessionNumber,
       soundEnabled,
+      workspaceOrganized,
+      focusStartTime,
+      totalPauseDuration,
       setSessionGoal,
       setCapturedThoughts,
       setReflection,
       setSessionStats,
       setSoundEnabled: handleSoundToggle,
+      setWorkspaceOrganized,
+      setPlanStep,
       toggleTimer,
       resetTimer,
       skipToNextPhase,
