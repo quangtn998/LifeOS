@@ -154,13 +154,7 @@ const SessionHistoryGrouped: React.FC<SessionHistoryGroupedProps> = ({ sessions 
                       </div>
                     </div>
 
-                  {!session.completed && (
-                    <div className="mt-3 p-3 bg-yellow-900/20 rounded-md border border-yellow-500/20">
-                      <p className="text-xs text-yellow-400">Session was not completed. No reflection or stats available.</p>
-                    </div>
-                  )}
-
-                  {session.completed && session.reflection && (
+                  {session.reflection && (
                     <div className="mt-3 p-3 bg-gray-900 rounded-md">
                       <p className="text-xs font-semibold text-green-400 mb-1">Reflection:</p>
                       <p className="text-sm text-gray-300">{session.reflection}</p>
@@ -174,7 +168,7 @@ const SessionHistoryGrouped: React.FC<SessionHistoryGroupedProps> = ({ sessions 
                     </div>
                   )}
 
-                  {session.completed && (
+                  {(session.disruptors || session.toolkit_usage || session.recharge_usage) && (
                     <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-4">
                       <div>
                         <p className="text-xs font-semibold text-red-400 mb-1">Disruptors:</p>

@@ -591,6 +591,7 @@ const RechargeList: React.FC<{defaultActivities: CustomTool[], customActivities:
 
 const WeeklyStats: React.FC<{sessions: FocusSessionHistory[]}> = ({ sessions }) => {
     const completedSessions = sessions.filter(s => s.completed);
+    const incompleteSessions = sessions.filter(s => !s.completed);
     const earlyExitSessions = completedSessions.filter(s => s.is_early_exit);
     const totalMinutes = completedSessions.reduce((sum, s) => sum + (s.actual_duration_minutes || s.duration_minutes || 0), 0);
     const totalHours = Math.floor(totalMinutes / 60);
@@ -608,12 +609,28 @@ const WeeklyStats: React.FC<{sessions: FocusSessionHistory[]}> = ({ sessions }) 
                 <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
                     <p className="text-xs text-gray-400 mb-1">Total Sessions</p>
                     <p className="text-2xl font-bold text-white">{sessions.length}</p>
-                    <p className="text-xs text-gray-500 mt-1">{completedSessions.length} completed</p>
+                    <div className="flex items-center gap-2 mt-1 text-xs">
+                        {completedSessions.length > 0 && (
+                            <span className="text-green-400">{completedSessions.length} completed</span>
+                        )}
+                        {incompleteSessions.length > 0 && (
+                            <span className="text-yellow-400">{incompleteSessions.length} in progress</span>
+                        )}
+                    </div>
                 </div>
                 <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
                     <p className="text-xs text-gray-400 mb-1">Focus Time</p>
-                    <p className="text-2xl font-bold text-cyan-400">{totalHours}h {remainingMinutes}m</p>
-                    <p className="text-xs text-gray-500 mt-1">Avg: {avgDuration} min</p>
+                    {completedSessions.length > 0 ? (
+                        <>
+                            <p className="text-2xl font-bold text-cyan-400">{totalHours}h {remainingMinutes}m</p>
+                            <p className="text-xs text-gray-500 mt-1">Avg: {avgDuration} min</p>
+                        </>
+                    ) : (
+                        <>
+                            <p className="text-2xl font-bold text-gray-500">-</p>
+                            <p className="text-xs text-gray-500 mt-1">No completed sessions</p>
+                        </>
+                    )}
                 </div>
                 <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
                     <p className="text-xs text-gray-400 mb-1">Completion Rate</p>
@@ -624,9 +641,16 @@ const WeeklyStats: React.FC<{sessions: FocusSessionHistory[]}> = ({ sessions }) 
                 </div>
                 <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
                     <p className="text-xs text-gray-400 mb-1">Total Paused</p>
-                    <p className="text-2xl font-bold text-yellow-400">{totalPauseMinutes}m</p>
-                    {completedSessions.length > 0 && (
-                        <p className="text-xs text-gray-500 mt-1">Avg: {Math.round(totalPauseMinutes / completedSessions.length)}m/session</p>
+                    {completedSessions.length > 0 && totalPauseMinutes > 0 ? (
+                        <>
+                            <p className="text-2xl font-bold text-yellow-400">{totalPauseMinutes}m</p>
+                            <p className="text-xs text-gray-500 mt-1">Avg: {Math.round(totalPauseMinutes / completedSessions.length)}m/session</p>
+                        </>
+                    ) : (
+                        <>
+                            <p className="text-2xl font-bold text-gray-500">-</p>
+                            <p className="text-xs text-gray-500 mt-1">No pauses recorded</p>
+                        </>
                     )}
                 </div>
             </div>
